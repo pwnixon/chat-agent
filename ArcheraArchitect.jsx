@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Box, Stack, Typography, IconButton, Paper, InputBase, Button, Divider, Chip, ToggleButtonGroup, ToggleButton, Tooltip, Container, TextField, Select, MenuItem, FormControl, Icon as MuiIcon, Menu, ListItemIcon, ListItemText, Link, Collapse } from '@mui/material';
+import { Box, Stack, Typography, IconButton, Paper, InputBase, Button, Divider, Chip, ToggleButtonGroup, ToggleButton, Tooltip, Container, TextField, Select, MenuItem, FormControl, Icon as MuiIcon, Menu, ListItemIcon, ListItemText, Link, Collapse, Fab, Skeleton } from '@mui/material';
 import AppShell from '../_template/AppShell';
 import palette from '../_template/palettes/archera-palette';
 import { color, typography, radius } from '../_template/tokens';
@@ -229,7 +229,7 @@ function ThinkingTrace({ steps, instant=false }) {
   if (!steps || steps.length === 0) return null;
 
   return (
-    <div style={{ fontFamily: "Roboto,sans-serif", display: "flex", flexDirection: "column", gap: 2 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {steps.slice(0, allDone ? steps.length : currentStep + 1).map((step, i) => {
         const isTyping = !allDone && i === currentStep;
         const text = isTyping ? displayedText : step;
@@ -253,7 +253,7 @@ function ThinkingTrace({ steps, instant=false }) {
 // ─── ThinkingToggle — collapsible wrapper for ThinkingTrace ──────────────────
 function ThinkingToggle({ steps, expanded, setExpanded, instant=false }) {
   return (
-    <div style={{fontFamily:"Roboto,sans-serif"}}>
+    <div>
       <div style={{display:"flex",gap:4,alignItems:"center",cursor:"pointer"}} onClick={()=>setExpanded(o=>!o)}>
         <div style={{transition:"transform 0.18s",transform:expanded?"rotate(90deg)":"rotate(0deg)",display:"flex",alignItems:"center",color:"rgba(104,104,112,0.5)"}}>
           <MuiIcon sx={{fontSize:13}}>chevron_right</MuiIcon>
@@ -268,17 +268,14 @@ function ThinkingToggle({ steps, expanded, setExpanded, instant=false }) {
 // ─── FollowUp component ───────────────────────────────────────────────────────
 function FollowUp({ text, onPrompt }) {
   return (
-    <Box
+    <Link
+      component="button"
       onClick={()=>onPrompt(text)}
-      sx={{
-        display:"inline-flex", alignItems:"center", gap:"4px",
-        cursor:"pointer", mt:1,
-        color:palette.uiPrimary[500],
-        '&:hover .follow-up-text':{ textDecoration:"underline" },
-      }}
+      underline="hover"
+      sx={{...typography.body1, mt:1, color:palette.uiPrimary[500], display:"block", textAlign:"left"}}
     >
-      <Typography className="follow-up-text" sx={{...typography.body1, color:"inherit"}}>{text}</Typography>
-    </Box>
+      {text}
+    </Link>
   );
 }
 
@@ -296,7 +293,7 @@ function ReasoningTrace({ reasoning, expanded, setExpanded }) {
   },[expanded, reasoning]);
 
   return (
-    <div style={{fontFamily:"Roboto,sans-serif"}}>
+    <div>
       <div style={{display:"flex",gap:4,alignItems:"center",cursor:"pointer"}} onClick={()=>setExpanded(o=>!o)}>
         <div style={{transition:"transform 0.18s",transform:expanded?"rotate(90deg)":"rotate(0deg)",display:"flex",alignItems:"center",color:"rgba(104,104,112,0.5)"}}>
           <MuiIcon sx={{fontSize:13}}>chevron_right</MuiIcon>
@@ -324,7 +321,7 @@ function ReasoningTrace({ reasoning, expanded, setExpanded }) {
 // ─── SourcesPanel — source activities ────────────────────────────────────────
 function SourcesPanel({ data=ACTIVITY_DONE, expanded, setExpanded }) {
   return (
-    <div style={{fontFamily:"Roboto,sans-serif"}}>
+    <div>
       <div style={{display:"flex",gap:4,alignItems:"center",cursor:"pointer"}} onClick={()=>setExpanded(o=>!o)}>
         <div style={{transition:"transform 0.18s",transform:expanded?"rotate(90deg)":"rotate(0deg)",display:"flex",alignItems:"center",color:"rgba(104,104,112,0.5)"}}>
           <MuiIcon sx={{fontSize:13}}>chevron_right</MuiIcon>
@@ -359,7 +356,7 @@ function Phrases({ active, expanded, setExpanded }) {
   },[active]);
 
   return (
-    <div style={{fontFamily:"Roboto,sans-serif",display:"flex",flexDirection:"column",gap:8}}>
+    <div style={{display:"flex",flexDirection:"column",gap:8}}>
       <div style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}} onClick={()=>setExpanded(o=>!o)}>
         <div style={{transition:"transform 0.18s",transform:expanded?"rotate(90deg)":"rotate(0deg)",display:"flex",alignItems:"center",flexShrink:0,color:"rgba(104,104,112,0.5)"}}>
           <MuiIcon sx={{fontSize:14}}>chevron_right</MuiIcon>
@@ -627,10 +624,10 @@ function StepPill({ tone="blue", label, meta }) {
         <div style={{width:6,height:6,borderRadius:"50%",background:t.fg,flexShrink:0}}/>
         <span style={{
           fontSize:11, fontWeight:600, letterSpacing:"0.06em",
-          color:t.fg, fontFamily:"Roboto,sans-serif",
+          color:t.fg,
         }}>{label}</span>
       </div>
-      {meta && <span style={{fontSize:12,color:"rgba(104,104,112,0.55)",fontFamily:"Roboto,sans-serif"}}>{meta}</span>}
+      {meta && <span style={{fontSize:12,color:"rgba(104,104,112,0.55)"}}>{meta}</span>}
     </div>
   );
 }
@@ -668,7 +665,7 @@ function StepCards({ steps }) {
                 }}>
                   <MuiIcon baseClassName="material-icons-outlined" sx={{fontSize:14}}>{stepIconName}</MuiIcon>
                 </Box>
-                <Typography sx={{fontSize:13,fontWeight:500,lineHeight:"18px",color:"rgba(9,10,29,0.85)",flex:1,fontFamily:"Roboto,sans-serif"}}>{step.label}</Typography>
+                <Typography sx={{fontSize:13,fontWeight:500,lineHeight:"18px",color:"rgba(9,10,29,0.85)",flex:1,}}>{step.label}</Typography>
                 {step.expandable && (
                   <MuiIcon sx={{fontSize:16,color:"rgba(104,104,112,0.55)",flexShrink:0,transition:"transform 0.18s",transform:isOpen?"rotate(180deg)":"rotate(0deg)"}}>keyboard_arrow_down</MuiIcon>
                 )}
@@ -683,18 +680,18 @@ function StepCards({ steps }) {
                       animation:"fadeIn 0.25s ease both",
                     }}>
                       <Box sx={{minWidth:0}}>
-                        <Typography sx={{fontSize:14,fontWeight:600,color:"rgba(9,10,29,0.85)",lineHeight:"18px",fontFamily:"Roboto,sans-serif"}}>
+                        <Typography sx={{fontSize:14,fontWeight:600,color:"rgba(9,10,29,0.85)",lineHeight:"18px",}}>
                           {plan.name}
                         </Typography>
-                        <Typography sx={{fontSize:12,color:"rgba(104,104,112,0.65)",mt:"2px",fontFamily:"Roboto,sans-serif"}}>
+                        <Typography sx={{fontSize:12,color:"rgba(104,104,112,0.65)",mt:"2px",}}>
                           {plan.term} term
                         </Typography>
                       </Box>
                       <Box sx={{textAlign:"right",flexShrink:0,ml:"12px"}}>
-                        <Typography sx={{fontSize:14,fontWeight:600,color:"#3a9e6e",lineHeight:"18px",fontFamily:"Roboto,sans-serif"}}>
+                        <Typography sx={{fontSize:14,fontWeight:600,color:"#3a9e6e",lineHeight:"18px",}}>
                           {plan.savings}
                         </Typography>
-                        <Typography sx={{fontSize:11,color:"rgba(104,104,112,0.55)",mt:"2px",fontFamily:"Roboto,sans-serif"}}>
+                        <Typography sx={{fontSize:11,color:"rgba(104,104,112,0.55)",mt:"2px",}}>
                           monthly savings
                         </Typography>
                       </Box>
@@ -1127,19 +1124,15 @@ function ChatItem({ title: initialTitle, isPinned = false, onPinToggle, onDelete
         </Stack>
       ) : null}
 
-      {!renaming && !confirmingDelete && <Box
-        onClick={e=>{e.stopPropagation(); setMenuAnchor(e.currentTarget);}}
-        sx={{
-          width:24, height:24, borderRadius:"50%", flexShrink:0, ml:"8px",
-          bgcolor: palette.neutral[300],
-          display:"flex", alignItems:"center", justifyContent:"center",
-          cursor:"pointer", visibility: hovered||menuOpen ? "visible" : "hidden",
-          '&:hover':{ bgcolor: palette.neutral[400] },
-          transition:"background 0.1s",
-        }}
-      >
-        <MuiIcon sx={{fontSize:16, color:palette.neutral[700], lineHeight:1}}>more_vert</MuiIcon>
-      </Box>}
+      {!renaming && !confirmingDelete && (
+        <IconButton
+          size="small"
+          onClick={e=>{e.stopPropagation(); setMenuAnchor(e.currentTarget);}}
+          sx={{flexShrink:0, ml:"4px", visibility: hovered||menuOpen ? "visible" : "hidden"}}
+        >
+          <MuiIcon sx={{fontSize:16}}>more_vert</MuiIcon>
+        </IconButton>
+      )}
 
       <Menu
         anchorEl={menuAnchor}
@@ -1272,7 +1265,7 @@ function ChatMenu({ onNewChat, sidebar=false, onSelectChat, showNewChat=true, de
         <svg width="25" height="25" viewBox="0 0 28 28" fill="none" style={{flexShrink:0}}>
           <path d="M25.6549 4.66665C25.6549 3.38331 24.6166 2.33331 23.3333 2.33331H4.66659C3.38325 2.33331 2.33325 3.38331 2.33325 4.66665V18.6666C2.33325 19.95 3.38325 21 4.66659 21H20.9999L25.6666 25.6666L25.6549 4.66665ZM19.8333 12.8333H15.1666V17.5H12.8333V12.8333H8.16659V10.5H12.8333V5.83331H15.1666V10.5H19.8333V12.8333Z" fill={C_TERTIARY}/>
         </svg>
-        <Typography sx={{fontSize:16,fontWeight:500,lineHeight:"20px",color:"rgba(9,10,29,0.65)",fontFamily:"Roboto,sans-serif"}}>New Chat</Typography>
+        <Typography sx={{fontSize:16,fontWeight:500,lineHeight:"20px",color:"rgba(9,10,29,0.65)",}}>New Chat</Typography>
       </Box>}
 
       {/* Chat list */}
@@ -1308,8 +1301,8 @@ function ChatMenu({ onNewChat, sidebar=false, onSelectChat, showNewChat=true, de
           <MuiIcon sx={{fontSize:20,color:palette.uiPrimary[500]}}>support_agent</MuiIcon>
         </Box>
         <Box>
-          <Typography sx={{fontSize:12,fontWeight:500,lineHeight:"16px",color:palette.uiPrimary[500],fontFamily:"Roboto,sans-serif"}}>Talk to a human</Typography>
-          <Typography sx={{fontSize:10,fontWeight:400,lineHeight:"12px",color:"rgba(116,116,120,0.75)",fontFamily:"Roboto,sans-serif"}}>powered by pylon</Typography>
+          <Typography sx={{fontSize:12,fontWeight:500,lineHeight:"16px",color:palette.uiPrimary[500],}}>Talk to a human</Typography>
+          <Typography sx={{fontSize:10,fontWeight:400,lineHeight:"12px",color:"rgba(116,116,120,0.75)",}}>powered by pylon</Typography>
         </Box>
       </Box>
     </Box>
@@ -1321,15 +1314,15 @@ function PagePlaceholder({ panelOpen }) {
     <Box sx={{p:4, pr: panelOpen ? 1 : 4}}>
       <Stack direction="row" gap={2} alignItems="center" sx={{mb:3}}>
         {[90,110,70].map((w,i)=>(
-          <Box key={i} sx={{height:32, width:w, borderRadius:2, bgcolor:'neutral.100', flexShrink:0}}/>
+          <Skeleton key={i} variant="rounded" width={w} height={32} sx={{flexShrink:0}}/>
         ))}
         <Box sx={{flex:1}}/>
-        <Box sx={{height:32, width:120, borderRadius:2, bgcolor:'neutral.100', flexShrink:0}}/>
+        <Skeleton variant="rounded" width={120} height={32} sx={{flexShrink:0}}/>
       </Stack>
       <Paper variant="outlined" sx={{borderRadius:2, overflow:'hidden'}}>
         <Box sx={{display:'flex', p:'12px 16px', borderBottom:1, borderColor:'divider', gap:3}}>
           {[160,100,90,90,80,80].map((w,i)=>(
-            <Box key={i} sx={{height:10, width:w, borderRadius:'2px', bgcolor:'neutral.100', flexShrink:0}}/>
+            <Skeleton key={i} variant="rounded" width={w} height={10} sx={{flexShrink:0}}/>
           ))}
         </Box>
         {Array.from({length:8}).map((_,i)=>(
@@ -1338,12 +1331,12 @@ function PagePlaceholder({ panelOpen }) {
             borderBottom: i<7 ? 1 : 0, borderColor:'divider',
             gap:3, alignItems:'center',
           }}>
-            <Box sx={{height:10, width:160, borderRadius:'2px', bgcolor:'neutral.100', flexShrink:0}}/>
-            <Box sx={{height:10, width:100, borderRadius:'2px', bgcolor:'neutral.100', flexShrink:0}}/>
-            <Box sx={{height:22, width:90, borderRadius:1, bgcolor:'success.light', flexShrink:0}}/>
-            <Box sx={{height:10, width:90, borderRadius:'2px', bgcolor:'neutral.100', flexShrink:0}}/>
-            <Box sx={{height:10, width:80, borderRadius:'2px', bgcolor:'neutral.100', flexShrink:0}}/>
-            <Box sx={{height:10, width:80, borderRadius:'2px', bgcolor:'neutral.100', flexShrink:0}}/>
+            <Skeleton variant="rounded" width={160} height={10} sx={{flexShrink:0}}/>
+            <Skeleton variant="rounded" width={100} height={10} sx={{flexShrink:0}}/>
+            <Skeleton variant="rounded" width={90} height={22} sx={{flexShrink:0}}/>
+            <Skeleton variant="rounded" width={90} height={10} sx={{flexShrink:0}}/>
+            <Skeleton variant="rounded" width={80} height={10} sx={{flexShrink:0}}/>
+            <Skeleton variant="rounded" width={80} height={10} sx={{flexShrink:0}}/>
           </Box>
         ))}
       </Paper>
@@ -1906,7 +1899,7 @@ export default function App() {
             autoFocus
             onKeyDown={onKey}
             onChange={e=>{setInput(e.target.value);}}
-            sx={{flex:1,fontFamily:"Roboto,sans-serif",fontSize:14,lineHeight:"20px",color:palette.text.primary,p:0}}
+            sx={{flex:1,fontSize:14,lineHeight:"20px",color:palette.text.primary,p:0}}
           />
           <IconButton size="small" onClick={send} disabled={busy||!input.trim()} sx={{flexShrink:0,p:0,opacity:busy||!input.trim()?0.3:1}}>
             <MuiIcon sx={{fontSize:18,color:palette.uiPrimary[300]}}>send</MuiIcon>
@@ -1968,24 +1961,12 @@ export default function App() {
         {/* Launch FAB — shown when panel is closed */}
         {!panelOpen&&(
           <Tooltip title="Open Chat Agent" placement="left" arrow>
-            <Box
+            <Fab
               onClick={()=>{setPanelMode(window.innerWidth>=BP_MED?'sidebar':'overlay');setPanelOpen(true);}}
-              sx={{
-                position:'absolute',bottom:24,right:24,
-                width:56,height:56,borderRadius:'100px',
-                bgcolor:'white',overflow:'hidden',
-                boxShadow:'0px 3px 5px -1px rgba(0,0,0,0.20), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12)',
-                display:'flex',alignItems:'center',justifyContent:'center',
-                cursor:'pointer',zIndex:10,
-                animation:'fadeIn 0.2s ease',
-                transition:'box-shadow 0.2s, transform 0.15s',
-                '&:hover':{boxShadow:'0px 4px 8px -2px rgba(0,0,0,0.24), 0px 8px 14px 0px rgba(0,0,0,0.18), 0px 2px 22px 0px rgba(0,0,0,0.15)',transform:'scale(1.04)'},
-              }}
+              sx={{position:'absolute',bottom:24,right:24,zIndex:10,animation:'fadeIn 0.2s ease'}}
             >
-              <Box sx={{p:'8px',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <ArcheraLogo size={24}/>
-              </Box>
-            </Box>
+              <ArcheraLogo size={24}/>
+            </Fab>
           </Tooltip>
         )}
 
