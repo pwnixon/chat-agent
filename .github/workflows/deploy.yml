@@ -28,10 +28,10 @@ jobs:
           node-version: 20
           cache: npm
 
-      - run: npm ci
+      - name: Install design system dependencies
+        run: cd ../_template && npm ci
 
-      - name: Link node_modules into template
-        run: ln -s $PWD/node_modules ../_template/node_modules
+      - run: npm ci
 
       - run: npm run build
         env:
