@@ -20,11 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Checkout design system
-        uses: actions/checkout@v4
-        with:
-          repository: pwnixon/design-system
-          path: _template
+      - name: Clone design system as sibling
+        run: git clone https://github.com/pwnixon/design-system.git ../_template
 
       - uses: actions/setup-node@v4
         with:
