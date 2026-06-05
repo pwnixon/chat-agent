@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Stack, Typography, IconButton, Paper, InputBase, Button, ButtonBase, Divider, Chip, ToggleButtonGroup, ToggleButton, Tooltip, Container, TextField, Select, MenuItem, FormControl, Icon as MuiIcon, Menu, ListItemIcon, ListItemText, Link, Collapse, Fab, Skeleton } from '@mui/material';
+import { lighten, darken } from '@mui/material/styles';
 import AppShell from '../_template/AppShell';
 import palette from '../_template/palettes/archera-palette';
 import { color, typography, radius } from '../_template/tokens';
@@ -171,9 +172,9 @@ function ActivityRow({ item, i, total }) {
       <Box sx={{flex:1,minWidth:0}}>
         <Stack direction="row" alignItems="center" gap="6px">
           <Typography sx={{...typography.body2,fontWeight:500,color:item.status==="active"?C_PRIMARY:palette.text.primary,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.label}</Typography>
-          {item.status==="active"&&<Typography component="span" sx={{fontSize:9,fontWeight:600,letterSpacing:"0.06em",color:C_PRIMARY,background:`${C_PRIMARY}14`,borderRadius:"3px",padding:"1px 4px",flexShrink:0}}>ACTIVE</Typography>}
-          {item.status==="done"&&<Typography component="span" sx={{fontSize:9,fontWeight:600,letterSpacing:"0.06em",color:palette.success[500],background:`${palette.success[500]}14`,borderRadius:"3px",padding:"1px 4px",flexShrink:0}}>DONE</Typography>}
-          {item.status==="pending"&&<Typography component="span" sx={{fontSize:9,fontWeight:600,letterSpacing:"0.06em",color:palette.text.secondary,background:"rgba(0,0,0,0.05)",borderRadius:"3px",padding:"1px 4px",flexShrink:0}}>PENDING</Typography>}
+          {item.status==="active"&&<Typography component="span" sx={{...typography.micro,color:C_PRIMARY,background:`${C_PRIMARY}14`,borderRadius:"3px",padding:"1px 4px",flexShrink:0}}>ACTIVE</Typography>}
+          {item.status==="done"&&<Typography component="span" sx={{...typography.micro,color:palette.success[500],background:`${palette.success[500]}14`,borderRadius:"3px",padding:"1px 4px",flexShrink:0}}>DONE</Typography>}
+          {item.status==="pending"&&<Typography component="span" sx={{...typography.micro,color:palette.text.secondary,background:"rgba(0,0,0,0.05)",borderRadius:"3px",padding:"1px 4px",flexShrink:0}}>PENDING</Typography>}
         </Stack>
         <Typography sx={{...typography.caption,color:palette.text.secondary,mt:"1px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.detail}</Typography>
       </Box>
@@ -256,9 +257,9 @@ function ThinkingToggle({ steps, expanded, setExpanded, instant=false }) {
     <div>
       <div style={{display:"flex",gap:4,alignItems:"center",cursor:"pointer"}} onClick={()=>setExpanded(o=>!o)}>
         <div style={{transition:"transform 0.18s",transform:expanded?"rotate(90deg)":"rotate(0deg)",display:"flex",alignItems:"center",color:palette.text.disabled}}>
-          <MuiIcon sx={{fontSize:13}}>chevron_right</MuiIcon>
+          <MuiIcon fontSize="inherit">chevron_right</MuiIcon>
         </div>
-        <span style={{fontWeight:600,fontSize:10,lineHeight:"12px",color:palette.text.secondary,letterSpacing:"0.05em"}}>THINKING</span>
+        <span style={{...typography.micro,color:palette.text.secondary}}>THINKING</span>
       </div>
       {expanded&&<Box sx={{mt:"6px",p:"8px 10px",border:`1px solid ${color.divider}`,borderRadius:`${radius.lg}px`,display:"flex",flexDirection:"column",gap:"2px"}}><ThinkingTrace steps={steps} instant={instant}/></Box>}
     </div>
@@ -296,9 +297,9 @@ function ReasoningTrace({ reasoning, expanded, setExpanded }) {
     <div>
       <div style={{display:"flex",gap:4,alignItems:"center",cursor:"pointer"}} onClick={()=>setExpanded(o=>!o)}>
         <div style={{transition:"transform 0.18s",transform:expanded?"rotate(90deg)":"rotate(0deg)",display:"flex",alignItems:"center",color:palette.text.disabled}}>
-          <MuiIcon sx={{fontSize:13}}>chevron_right</MuiIcon>
+          <MuiIcon fontSize="inherit">chevron_right</MuiIcon>
         </div>
-        <span style={{fontWeight:600,fontSize:10,lineHeight:"12px",color:palette.text.secondary,letterSpacing:"0.05em"}}>WHY</span>
+        <span style={{...typography.micro,color:palette.text.secondary}}>WHY</span>
       </div>
       {expanded&&(
         <Box sx={{mt:"6px",p:"8px 10px",border:`1px solid ${color.divider}`,borderRadius:`${radius.lg}px`,display:"flex",flexDirection:"column",gap:"2px"}}>
@@ -324,9 +325,9 @@ function SourcesPanel({ data=ACTIVITY_DONE, expanded, setExpanded }) {
     <div>
       <div style={{display:"flex",gap:4,alignItems:"center",cursor:"pointer"}} onClick={()=>setExpanded(o=>!o)}>
         <div style={{transition:"transform 0.18s",transform:expanded?"rotate(90deg)":"rotate(0deg)",display:"flex",alignItems:"center",color:palette.text.disabled}}>
-          <MuiIcon sx={{fontSize:13}}>chevron_right</MuiIcon>
+          <MuiIcon fontSize="inherit">chevron_right</MuiIcon>
         </div>
-        <span style={{fontWeight:600,fontSize:10,lineHeight:"12px",color:palette.text.secondary,letterSpacing:"0.05em"}}>
+        <span style={{...typography.micro,color:palette.text.secondary}}>
           SOURCES USED ({data.length})
         </span>
       </div>
@@ -359,7 +360,7 @@ function Phrases({ active, expanded, setExpanded }) {
     <div style={{display:"flex",flexDirection:"column",gap:8}}>
       <div style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}} onClick={()=>setExpanded(o=>!o)}>
         <div style={{transition:"transform 0.18s",transform:expanded?"rotate(90deg)":"rotate(0deg)",display:"flex",alignItems:"center",flexShrink:0,color:palette.text.disabled}}>
-          <MuiIcon sx={{fontSize:14}}>chevron_right</MuiIcon>
+          <MuiIcon fontSize="inherit">chevron_right</MuiIcon>
         </div>
         <Typography ref={ref} component="div" sx={{...typography.body1,color:palette.text.secondary,fontStyle:"italic",flex:1}} />
       </div>
@@ -457,7 +458,7 @@ function UserBubble({ content, isLatest }) {
   },[isLatest]);
   return (
     <Paper sx={{
-      bgcolor:palette.uiPrimary[50],flex:1,p:"11px 15px",
+      bgcolor:palette.accent2[50],flex:1,p:"11px 15px",
       borderRadius:"12px 12px 0 12px",fontSize:14,lineHeight:"20px",
       color:palette.text.primary,boxShadow:"none",
       animation: bounce ? "bounceIn 0.8s cubic-bezier(0.0,0.0,0.2,1) both" : "none",
@@ -622,10 +623,7 @@ function StepPill({ tone="blue", label, meta }) {
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingLeft:2,paddingRight:4}}>
       <div style={{display:"flex",alignItems:"center",gap:6}}>
         <div style={{width:6,height:6,borderRadius:"50%",background:t.fg,flexShrink:0}}/>
-        <span style={{
-          fontSize:11, fontWeight:600, letterSpacing:"0.06em",
-          color:t.fg,
-        }}>{label}</span>
+        <span style={{...typography.micro,color:t.fg}}>{label}</span>
       </div>
       {meta && <Typography component="span" sx={{...typography.body2,color:palette.text.secondary}}>{meta}</Typography>}
     </div>
@@ -770,9 +768,9 @@ function ResponseRow({ html, instant=false, onStreamDone, pageNum, totalPages, o
 // ─── Write action confirmation ────────────────────────────────────────────────
 function WriteAction({ action, detail, items, onConfirm, onDeny, status }) {
   const isDone = status==="confirmed" || status==="denied";
-  const statusColor = status==="confirmed" ? palette.success[500] : status==="denied" ? palette.error[600] : palette.accent1[700];
-  const borderColor = status==="confirmed" ? `${palette.success[500]}40` : status==="denied" ? `${palette.error[600]}33` : `${palette.accent1[700]}4d`;
-  const bgColor     = status==="confirmed" ? `${palette.success[500]}08` : status==="denied" ? `${palette.error[600]}08` : `${palette.accent1[700]}08`;
+  const statusColor = status==="confirmed" ? darken(palette.success[300], 0.6) : status==="denied" ? darken(palette.error[300], 0.6) : darken(palette.accent1[300], 0.6);
+  const borderColor = status==="confirmed" ? lighten(palette.success[300], 0.5) : status==="denied" ? lighten(palette.error[300], 0.5) : lighten(palette.accent1[300], 0.5);
+  const bgColor     = status==="confirmed" ? lighten(palette.success[300], 0.9) : status==="denied" ? lighten(palette.error[300], 0.9) : lighten(palette.accent1[300], 0.9);
   return (
     <Box>
       {/* Label */}
@@ -826,9 +824,9 @@ function WriteActionChoice({ action, detail, choices, selected, status, onSelect
   const isDone = status==="confirmed" || status==="denied";
   const canAct = !!selected && !isDone;
   const tone = status==="confirmed" ? "confirmed" : status==="denied" ? "denied" : "pending";
-  const statusColor = tone==="confirmed" ? palette.success[500] : tone==="denied" ? palette.error[600] : palette.accent1[700];
-  const borderColor = tone==="confirmed" ? `${palette.success[500]}40` : tone==="denied" ? `${palette.error[600]}33` : `${palette.accent1[700]}4d`;
-  const bgColor     = tone==="confirmed" ? `${palette.success[500]}08` : tone==="denied" ? `${palette.error[600]}08` : `${palette.accent1[700]}08`;
+  const statusColor = tone==="confirmed" ? darken(palette.success[300], 0.6) : tone==="denied" ? darken(palette.error[300], 0.6) : darken(palette.accent1[300], 0.6);
+  const borderColor = tone==="confirmed" ? lighten(palette.success[300], 0.5) : tone==="denied" ? lighten(palette.error[300], 0.5) : lighten(palette.accent1[300], 0.5);
+  const bgColor     = tone==="confirmed" ? lighten(palette.success[300], 0.9) : tone==="denied" ? lighten(palette.error[300], 0.9) : lighten(palette.accent1[300], 0.9);
   return (
     <Box>
       {/* Label */}
