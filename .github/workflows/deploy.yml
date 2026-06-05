@@ -20,6 +20,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout design system
+        uses: actions/checkout@v4
+        with:
+          repository: pwnixon/design-system
+          path: _template
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
