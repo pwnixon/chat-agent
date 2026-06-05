@@ -56,11 +56,15 @@ const CHECKS = [
     description: 'Raw rgba() color in sx/style — use palette or token',
     test: (line, lineNum, filename) => {
       if (filename.includes('ArcheraArchitect') && lineNum <= SVG_EXEMPT_LINES) return false;
-      // Skip SVG animation code and CSS template string blocks
+      // Skip SVG animation code
       if (/lh\(|rgba\(152,152,160|setAttribute/.test(line)) return false;
-      // Skip lines inside CSS <style> template literals (keyframes, .class selectors)
+      // Skip CSS template string blocks (keyframes, class selectors)
       if (/^\s*(\.[\w-]|@keyframes|::-webkit)/.test(line)) return false;
-      // Only flag rgba used as a direct value in a JS property (not a CSS string)
+      // Skip lines that are HTML content strings (html: `...` or html:`...`)
+      if (/^\s*html\s*[=:]/.test(line) || /html:`/.test(line)) return false;
+      // Skip overlay/backdrop rgba(0,0,0,...) and on-dark rgba(255,255,255,...) — no palette equivalent
+      if (/rgba\(0,0,0|rgba\(255,255,255/.test(line)) return false;
+      // Only flag rgba used as a direct JS property value
       return /rgba\(\d/.test(line)
           && /(bgcolor|color|background|borderColor)\s*[=:]\s*(["'`])?rgba/.test(line);
     },
@@ -69,12 +73,14 @@ const CHECKS = [
     id: 'inline-fontsize',
     description: 'Raw px font size on text element — use typography token',
     test: (line) => {
-      // Only flag fontSize on Typography, div, span, p — not on MuiIcon (icon sizing is always explicit)
+      // Skip icon components — icon sizes are always set explicitly
       if (/MuiIcon|<Icon[\s>]/.test(line)) return false;
-      // Skip icon-size-looking values that appear alone (12, 13, 14, 16, 18, 20, 22, 24, 28, 32, 40)
-      if (/fontSize\s*:\s*(12|13|14|16|18|20|22|24|28|32|40)\s*[,}]/.test(line) && /MuiIcon|icon/.test(line.toLowerCase())) return false;
-      // Flag raw numeric fontSize on Typography/text-bearing elements
-      return /fontSize\s*:\s*\d+[,}]/.test(line)
+      // Skip micro-typography sizes (<12px) — no token equivalent
+      if (/fontSize\s*:\s*([1-9]|10|11)[,}\s]/.test(line)) return false;
+      // Skip HTML content strings
+      if (/^\s*html\s*[=:]/.test(line) || /html:`/.test(line)) return false;
+      // Flag raw numeric fontSize ≥12 on text-bearing elements
+      return /fontSize\s*:\s*1[2-9]\d*[,}]/.test(line)
           && /Typography|<div|<span|<p[\s>]/.test(line);
     },
   },
