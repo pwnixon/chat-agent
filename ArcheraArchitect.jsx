@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Box, Stack, Typography, IconButton, Paper, InputBase, Button, ButtonBase, Divider, Chip, ToggleButtonGroup, ToggleButton, Tooltip, Container, TextField, Select, MenuItem, FormControl, Icon as MuiIcon, Menu, ListItemIcon, ListItemText, Link, Collapse, Fab, Skeleton } from '@mui/material';
-import { lighten, darken } from '@mui/material/styles';
+import { Box, Stack, Typography, IconButton, Paper, InputBase, Button, ButtonBase, Divider, Chip, ToggleButtonGroup, ToggleButton, Tooltip, Container, TextField, Select, MenuItem, FormControl, Icon as MuiIcon, Menu, ListItemIcon, ListItemText, Link, Collapse, Fab, Skeleton, Fade } from '@mui/material';
+import { lighten, darken, alpha } from '@mui/material/styles';
 import AppShell from '../_template/AppShell';
 import palette from '../_template/palettes/archera-palette';
 import { color, typography, radius } from '../_template/tokens';
@@ -464,7 +464,7 @@ function UserBubble({ content, isLatest }) {
   return (
     <Paper sx={{
       bgcolor:palette.accent2[50],flex:1,p:"11px 15px",
-      borderRadius:"12px 12px 0 12px",fontSize:14,lineHeight:"20px",
+      borderRadius:3,borderBottomRightRadius:0,
       color:palette.text.primary,boxShadow:"none",
       animation: bounce ? "bounceIn 0.8s cubic-bezier(0.0,0.0,0.2,1) both" : "none",
     }}>
@@ -600,7 +600,7 @@ function ResponseToolbar({ page=1, total=1, compact=false, html='', onRegenerate
           />
         </Box>
         <Typography variant="caption">
-          Submitting this feedback shares the conversation context with Archera to help improve the Chat Agent experience.{' '}
+          Submitting this feedback shares the conversation context with Archera to help improve the Archera AI experience.{' '}
           <Link href="#" onClick={e=>e.preventDefault()}>Learn More</Link>
         </Typography>
         <Stack direction="row" justifyContent="flex-end" gap={1}>
@@ -1264,7 +1264,7 @@ function ChatMenu({ onNewChat, sidebar=false, onSelectChat, showNewChat=true, de
       boxShadow:"0px 2px 1px -1px rgba(0,0,0,0.20), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)",
     }} onClick={e=>e.stopPropagation()}>
       {/* New Chat */}
-      {sidebar&&showNewChat&&<ButtonBase onClick={onNewChat} sx={{display:"flex",alignItems:"center",gap:"8px",flexShrink:0,borderRadius:1,"&:hover":{opacity:0.75}}}>
+      {sidebar&&showNewChat&&<ButtonBase onClick={onNewChat} sx={{display:"flex",alignItems:"center",justifyContent:"flex-start",gap:"8px",borderRadius:1,"&:hover":{opacity:0.75}}}>
         <svg width="25" height="25" viewBox="0 0 28 28" fill="none" style={{flexShrink:0}}>
           <path d="M25.6549 4.66665C25.6549 3.38331 24.6166 2.33331 23.3333 2.33331H4.66659C3.38325 2.33331 2.33325 3.38331 2.33325 4.66665V18.6666C2.33325 19.95 3.38325 21 4.66659 21H20.9999L25.6666 25.6666L25.6549 4.66665ZM19.8333 12.8333H15.1666V17.5H12.8333V12.8333H8.16659V10.5H12.8333V5.83331H15.1666V10.5H19.8333V12.8333Z" fill={C_TERTIARY}/>
         </svg>
@@ -1393,9 +1393,14 @@ export default function App() {
   const [activeId, setActiveId]=useState(null);
   const promptRef=useRef(null);
   const [panelMode, setPanelMode]=useState(()=>getInitialPanelState().mode);
+  const [showFabBubble, setShowFabBubble]=useState(false);
+  const fabBubbleFired=useRef(false);
+  const [fabVariant, setFabVariant]=useState('a');
   const [panelWidth, setPanelWidth]=useState(380);
   const [panelHeight, setPanelHeight]=useState(300); // for bottom dock
   const [lastMode, setLastMode]=useState('sidebar'); // tracks last non-rail mode for rail placement
+  const [bottomVisible, setBottomVisible]=useState(false);
+  const bottomSlideTimer=useRef(null);
   const [overlayRect, setOverlayRect]=useState(null); // {left,top,w,h} — overlay position/size
   const panelRef=useRef(null);
   const bottomRef=useRef(null);
@@ -1457,10 +1462,21 @@ export default function App() {
     return()=>{mo.disconnect();cancelAnimationFrame(scrollRaf.current);};
   },[]);
 
+  // Show FAB bubble once on page load; never again after panel is opened
   useEffect(()=>{
-    if(panelMode==='fullscreen'||panelMode==='rail') setShowMenu(false);
+    if(panelOpen) return;
+    const t=setTimeout(()=>{ if(!fabBubbleFired.current) setShowFabBubble(true); },1800);
+    return()=>clearTimeout(t);
+  },[]);
+  useEffect(()=>{
+    if(panelOpen&&!fabBubbleFired.current){ fabBubbleFired.current=true; setShowFabBubble(false); }
+  },[panelOpen]);
+
+  useEffect(()=>{
+    if(panelMode==='fullscreen'||panelMode==='rail'||panelMode==='bottom') setShowMenu(false);
     if(panelMode!=='overlay') setOverlayRect(null);
     if(panelMode!=='rail') setLastMode(panelMode);
+    if(panelMode!=='bottom') setBottomVisible(false);
   },[panelMode]);
 
   // Responsive resize — auto-open on wide screens only; never auto-change an open panel
@@ -1511,7 +1527,7 @@ export default function App() {
       const versions=[...(m.versions||[])];
       const idx=m.versionIdx||0;
       versions[idx]=html;
-      return {...m,versions};
+      return {...m,versions,instant:true}; // mark as instant once fully streamed
     }));
   }
   function regenerateMsg(mid){
@@ -1633,6 +1649,23 @@ export default function App() {
   function onKey(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}
   function resize(e){const el=e.target;el.style.height="auto";el.style.height=Math.min(el.scrollHeight,110)+"px";}
 
+  function openBottom(){
+    clearTimeout(bottomSlideTimer.current);
+    setPanelMode('bottom');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>setBottomVisible(true)));
+  }
+  function closeToRail(){
+    setBottomVisible(false);
+    clearTimeout(bottomSlideTimer.current);
+    bottomSlideTimer.current=setTimeout(()=>setPanelMode('rail'), 280);
+  }
+  function openSidebar(){
+    setPanelOpen(true); setPanelMode('sidebar');
+  }
+  function closeSidebar(){
+    setPanelOpen(false); setShowMenu(false);
+  }
+
   // Bottom dock: click to collapse to rail, drag to resize height
   function startBottomDockResize(e){
     e.preventDefault();
@@ -1645,7 +1678,7 @@ export default function App() {
     function onUp(){
       window.removeEventListener('mousemove',onMove);
       window.removeEventListener('mouseup',onUp);
-      if(!dragged) setPanelMode('rail');
+      if(!dragged) closeToRail();
     }
     window.addEventListener('mousemove',onMove); window.addEventListener('mouseup',onUp);
   }
@@ -1777,7 +1810,7 @@ export default function App() {
           <IconButton sx={{width:28,height:28,p:0,flexShrink:0}} title="Chat history" onClick={()=>setShowMenu(o=>!o)}>
             <MuiIcon sx={{fontSize:22,color:showMenu?palette.text.primary:palette.text.secondary}}>view_list</MuiIcon>
           </IconButton>
-          <Box sx={{width:"1px",bgcolor:"rgba(0,0,0,0.15)",alignSelf:"stretch",flexShrink:0}}/>
+          <Box sx={{width:"1px",bgcolor:color.divider,alignSelf:"stretch",flexShrink:0}}/>
         </>}
         <ToggleButtonGroup
           size={panelMode==='fullscreen' ? 'medium' : 'small'}
@@ -1785,9 +1818,11 @@ export default function App() {
           exclusive
           onChange={(e,val)=>{
             if(val==='close'){
-              if(window.innerWidth>=BP_WIDE || panelMode==='bottom') setPanelMode('rail');
-              else { setPanelOpen(false); setShowMenu(false); }
-            } else if(val) { setPanelMode(val); }
+              if(panelMode==='bottom') closeToRail();
+              else if(window.innerWidth>=BP_WIDE) setPanelMode('rail');
+              else closeSidebar();
+            } else if(val==='bottom') openBottom();
+            else if(val) { setPanelMode(val); }
           }}
           sx={{flexShrink:0}}
         >
@@ -1972,51 +2007,83 @@ export default function App() {
         </div>
 
         {/* Launch FAB — shown when panel is closed */}
+        {/* LaunchPrompt — independent of FAB layout so it doesn't cause a shift */}
         {!panelOpen&&(
-          <Stack sx={{position:'absolute',bottom:24,right:24,zIndex:10,gap:2,alignItems:'center',animation:'fadeIn 0.2s ease'}}>
+          <Fade in={showFabBubble} unmountOnExit timeout={{enter:700,exit:250}}>
+            <Box sx={{position:'absolute',bottom:120,right:32,zIndex:10,maxWidth:240}}>
+              <Paper elevation={6} sx={{borderRadius:3,borderBottomRightRadius:0,bgcolor:palette.header,position:'relative'}}>
+                <IconButton size="small" onClick={()=>setShowFabBubble(false)} sx={{position:'absolute',top:6,right:6,p:'2px','&:hover':{bgcolor:alpha(palette.neutral.white,0.1)}}}>
+                  <MuiIcon sx={{fontSize:14,color:alpha(palette.neutral.white,0.5)}}>close</MuiIcon>
+                </IconButton>
+                <Box sx={{p:'14px 16px 12px'}}>
+                  <Stack direction="row" alignItems="center" gap={1} sx={{mb:'10px'}}>
+                    <ArcheraLogo size={14} tint={alpha(palette.neutral.white,0.55)}/>
+                    <Typography sx={{...typography.micro,color:alpha(palette.neutral.white,0.55)}}>ARCHERA AI</Typography>
+                  </Stack>
+                  <Typography sx={{...typography.body2,color:palette.neutral.white,mb:'10px',lineHeight:'1.5'}}>
+                    Ask me anything about your <Box component="span" sx={{color:palette.accent1[300],fontWeight:500}}>{PAGE_NAME}</Box>.
+                  </Typography>
+                  <Box
+                    onClick={()=>{
+                      setShowFabBubble(false);
+                      fabBubbleFired.current=true;
+                      window.innerWidth>=BP_MED?openSidebar():(setPanelMode('overlay'),setPanelOpen(true));
+                      newChat();
+                      setTimeout(()=>sendPrompt(SUGGESTED_PROMPTS[0]),400);
+                    }}
+                    sx={{display:'inline-flex',alignItems:'flex-start',gap:'6px',px:'10px',py:'6px',borderRadius:3,border:`1px solid ${alpha(palette.neutral.white,0.25)}`,bgcolor:alpha(palette.neutral.white,0.1),cursor:'pointer','&:hover':{bgcolor:alpha(palette.neutral.white,0.18)}}}
+                  >
+                    <Typography sx={{...typography.body2,color:alpha(palette.neutral.white,0.9),lineHeight:1.5}}>{SUGGESTED_PROMPTS[0]}</Typography>
+                  </Box>
+                </Box>
+              </Paper>
+            </Box>
+          </Fade>
+        )}
 
-            {/* Option A — Rotating conic gradient ring */}
-            <Tooltip title="Option A: Gradient ring" placement="left" arrow>
-              <Box sx={{position:'relative',width:60,height:60,filter:`drop-shadow(0 4px 10px ${C_PRIMARY}40)`}} onClick={()=>{setPanelMode(window.innerWidth>=BP_MED?'sidebar':'overlay');setPanelOpen(true);}}>
-                {/* Inner clip container */}
+        {!panelOpen&&(
+          <Stack sx={{position:'absolute',bottom:24,right:24,zIndex:10,alignItems:'center',gap:1,animation:'fadeIn 0.2s ease'}}>
+
+            {/* Active FAB */}
+            {fabVariant==='a' && (
+              <Box sx={{position:'relative',width:60,height:60,filter:`drop-shadow(0 4px 10px ${C_PRIMARY}40)`}} onClick={()=>{window.innerWidth>=BP_MED?openSidebar():(setPanelMode('overlay'),setPanelOpen(true));}}>
                 <Box sx={{position:'absolute',inset:0,borderRadius:'50%',overflow:'hidden'}}>
-                  {/* Rotating gradient — inset:-20 so corners are always outside the clip */}
                   <Box sx={{position:'absolute',inset:-20,background:`conic-gradient(from 0deg,${C_PRIMARY},${C_TERTIARY},${C_PRIMARY},${C_SECONDARY},${C_PRIMARY})`,animation:'rotateFabGradient 3s linear infinite'}}/>
-                  {/* White fill creates the ring */}
                   <Box sx={{position:'absolute',inset:'2px',borderRadius:'50%',bgcolor:'background.paper'}}/>
                 </Box>
                 <Fab sx={{position:'absolute',inset:0,width:'100%',height:'100%',bgcolor:'transparent',boxShadow:'none','&:hover':{bgcolor:'rgba(0,0,0,0.04)',boxShadow:'none'}}}>
                   <ArcheraLogo size={24} breathe/>
                 </Fab>
               </Box>
-            </Tooltip>
-
-            {/* Option B — Blob mesh orb */}
-            <Tooltip title="Option B: Blob orb" placement="left" arrow>
-              <Box sx={{position:'relative',width:64,height:64}} onClick={()=>{setPanelMode(window.innerWidth>=BP_MED?'sidebar':'overlay');setPanelOpen(true);}}>
-                {/* Orb container — clips the blobs */}
+            )}
+            {fabVariant==='b' && (
+              <Box sx={{position:'relative',width:64,height:64}} onClick={()=>{window.innerWidth>=BP_MED?openSidebar():(setPanelMode('overlay'),setPanelOpen(true));}}>
                 <Box sx={{position:'absolute',inset:0,borderRadius:'50%',bgcolor:C_PRIMARY,overflow:'hidden',isolation:'isolate',zIndex:1,WebkitMaskImage:'-webkit-radial-gradient(white,black)',maskImage:'radial-gradient(white,black)'}}>
                   <Box style={{position:'absolute',borderRadius:'50%',filter:'blur(12px)',opacity:0.9,backgroundColor:C_SECONDARY,width:'140%',height:'140%',top:'-50%',left:'-50%',animation:'moveBlue 7s infinite alternate cubic-bezier(0.4,0,0.2,1)'}}/>
                   <Box style={{position:'absolute',borderRadius:'50%',filter:'blur(12px)',opacity:0.9,backgroundColor:C_TERTIARY,width:'120%',height:'120%',bottom:'-30%',right:'-30%',animation:'movePink 8s infinite alternate cubic-bezier(0.4,0,0.2,1)'}}/>
                   <Box style={{position:'absolute',borderRadius:'50%',filter:'blur(12px)',opacity:0.9,backgroundColor:palette.brandPrimary[300],width:'100%',height:'100%',top:'20%',left:'20%',animation:'moveViolet 9s infinite alternate cubic-bezier(0.4,0,0.2,1)'}}/>
                 </Box>
-                {/* Transparent Fab for interaction + logo */}
-                <Fab sx={{position:'absolute',inset:0,width:'100%',height:'100%',zIndex:2,bgcolor:'transparent',boxShadow:'none','&:hover':{bgcolor:'rgba(255,255,255,0.1)',boxShadow:'none'}}}>
-                  <ArcheraLogo size={28} tint="#fff" twinkle/>
+                <Fab sx={{position:'absolute',inset:0,width:'100%',height:'100%',zIndex:2,bgcolor:'transparent',boxShadow:'none','&:hover':{bgcolor:alpha(palette.neutral.white,0.1),boxShadow:'none'}}}>
+                  <ArcheraLogo size={28} tint={palette.neutral.white} twinkle/>
                 </Fab>
               </Box>
-            </Tooltip>
-
-            {/* Option C — Breathing glow + halo */}
-            <Tooltip title="Option C: Breathing glow" placement="left" arrow>
-              <Box sx={{position:'relative',width:56,height:56}} onClick={()=>{setPanelMode(window.innerWidth>=BP_MED?'sidebar':'overlay');setPanelOpen(true);}}>
-                {/* Tight rotating halo */}
+            )}
+            {fabVariant==='c' && (
+              <Box sx={{position:'relative',width:56,height:56}} onClick={()=>{window.innerWidth>=BP_MED?openSidebar():(setPanelMode('overlay'),setPanelOpen(true));}}>
                 <Box sx={{position:'absolute',inset:-6,borderRadius:'50%',zIndex:0,background:`conic-gradient(from 0deg,${C_PRIMARY},${C_TERTIARY},${C_PRIMARY},${C_SECONDARY},${C_PRIMARY})`,animation:'rotateFabGradientSlow 8s linear infinite',filter:'blur(7px)',opacity:0.7}}/>
                 <Fab sx={{position:'absolute',inset:0,width:'100%',height:'100%',zIndex:1,bgcolor:palette.surface,animation:'fabGlow 2.5s ease-in-out infinite','&:hover':{bgcolor:palette.neutral[50],boxShadow:'none'}}}>
                   <ArcheraLogo size={24}/>
                 </Fab>
               </Box>
-            </Tooltip>
+            )}
+
+            {/* Variant switcher */}
+            <ToggleButtonGroup size="small" value={fabVariant} exclusive onChange={(_,v)=>v&&setFabVariant(v)}
+              sx={{'& .MuiToggleButton-root':{px:'10px',py:'2px',border:'none',color:palette.text.disabled,'&.Mui-selected':{bgcolor:'transparent',color:palette.text.secondary}},'& .MuiToggleButtonGroup-grouped':{borderRadius:'4px !important',border:'none !important'}}}>
+              <ToggleButton value="a"><Typography sx={{...typography.micro}}>A</Typography></ToggleButton>
+              <ToggleButton value="b"><Typography sx={{...typography.micro}}>B</Typography></ToggleButton>
+              <ToggleButton value="c"><Typography sx={{...typography.micro}}>C</Typography></ToggleButton>
+            </ToggleButtonGroup>
 
           </Stack>
         )}
@@ -2042,7 +2109,7 @@ export default function App() {
         {/* Rail — collapsed strip */}
         {panelMode==='rail' && lastMode!=='bottom' && (
           <Tooltip title="Open Chat Agent" placement="left" arrow>
-            <Box onClick={()=>setPanelMode(lastMode)}
+            <Box onClick={()=>lastMode==='sidebar'?openSidebar():setPanelMode(lastMode)}
               sx={{width:40,flexShrink:0,borderLeft:`1px solid ${color.divider}`,bgcolor:palette.surface,
                 display:'flex',flexDirection:'column',alignItems:'center',pt:2,cursor:'pointer',
                 '&:hover':{bgcolor:palette.neutral[50]},transition:'background 0.15s'}}>
@@ -2052,25 +2119,43 @@ export default function App() {
         )}
         {/* Rail — bottom strip */}
         {panelMode==='rail' && lastMode==='bottom' && (
-          <Tooltip title="Open Chat Agent" placement="top" arrow>
-            <Box onClick={()=>setPanelMode('bottom')}
-              sx={{position:'fixed',bottom:0,left:0,right:0,height:10,
-                borderTop:`1px solid ${color.divider}`,bgcolor:palette.surface,
-                display:'flex',alignItems:'center',justifyContent:'center',
-                cursor:'pointer',zIndex:20,
-                '&:hover':{bgcolor:palette.neutral[50]},transition:'background 0.15s'}}>
-              <Box sx={{width:40,height:4,borderRadius:2,bgcolor:palette.neutral[300]}}/>
-            </Box>
-          </Tooltip>
+          <Box onClick={openBottom} sx={{position:'fixed',bottom:0,left:0,right:0,height:48,
+            borderTop:`1px solid ${color.divider}`,bgcolor:palette.surface,
+            display:'flex',alignItems:'center',px:2,gap:2,zIndex:20,cursor:'pointer',
+            '&:hover':{bgcolor:palette.neutral[50]},transition:'background 0.15s'}}>
+            <Tooltip title="Open Chat Agent" placement="top" arrow>
+              <Box sx={{display:'flex',alignItems:'center',gap:1}}>
+                <ArcheraLogo size={20}/>
+              </Box>
+            </Tooltip>
+            <Box sx={{flex:1}}/>
+            {/* Same toggle buttons as the panel header */}
+            <ToggleButtonGroup
+              size="small"
+              value={panelMode}
+              exclusive
+              onChange={(e,val)=>{
+                if(val==='close'){ setPanelOpen(false); }
+                else if(val==='bottom') openBottom();
+                else if(val) setPanelMode(val);
+              }}
+            >
+              <Tooltip title="Dock right" placement="top" arrow><ToggleButton value="sidebar"><MuiIcon baseClassName="material-symbols-outlined">dock_to_right</MuiIcon></ToggleButton></Tooltip>
+              <Tooltip title="Dock bottom" placement="top" arrow><ToggleButton value="bottom"><MuiIcon baseClassName="material-symbols-outlined">dock_to_bottom</MuiIcon></ToggleButton></Tooltip>
+              <Tooltip title="Overlay" placement="top" arrow><ToggleButton value="overlay"><MuiIcon baseClassName="material-symbols-outlined">ad_group</MuiIcon></ToggleButton></Tooltip>
+              <Tooltip title="Fullscreen" placement="top" arrow><ToggleButton value="fullscreen"><MuiIcon>crop_free</MuiIcon></ToggleButton></Tooltip>
+              <Tooltip title="Close panel" placement="top" arrow><ToggleButton value="close"><MuiIcon>close</MuiIcon></ToggleButton></Tooltip>
+            </ToggleButtonGroup>
+          </Box>
         )}
 
-        {/* Chat panel — never unmounts, position/size changes by mode */}
-        {panelMode!=='rail' && <div ref={panelRef} style={{
+        {/* Chat panel — always mounted when panelOpen; rail hides it with display:none to preserve state */}
+        <div ref={panelRef} style={panelMode==='rail' ? {display:'none'} : {
           ...(panelMode==='sidebar' ? {
             position:'relative',
             width:panelWidth, flexShrink:0,
             borderLeft:`1px solid ${color.divider}`,
-          } : panelMode==='overlay' ? (overlayRect ? {
+          } :panelMode==='overlay' ? (overlayRect ? {
             position:'fixed',
             left:overlayRect.left, top:overlayRect.top,
             width:overlayRect.w, height:overlayRect.h,
@@ -2093,6 +2178,8 @@ export default function App() {
             borderTop:`1px solid ${color.divider}`,
             boxShadow:'0 -2px 12px rgba(0,0,0,0.12)',
             zIndex:20,
+            transition:'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
+            transform: bottomVisible ? 'translateY(0)' : 'translateY(100%)',
           } : {
             position:'fixed', inset:24,
             borderRadius:8,
@@ -2102,7 +2189,8 @@ export default function App() {
           }),
           background:palette.surface,
           display:'flex', flexDirection:'column', overflow:'hidden',
-        }}>
+        }}
+        >
           {chatPanel}
           {/* Bottom dock resize handle — horizontal pill at top */}
           {panelMode==='bottom' && (
@@ -2129,7 +2217,7 @@ export default function App() {
                 background:`linear-gradient(45deg, transparent 2px, ${palette.neutral[200]} 2px, ${palette.neutral[200]} 5px, transparent 5px, transparent 8px, ${palette.neutral[200]} 8px, ${palette.neutral[200]} 11px, transparent 11px, transparent 14px, ${palette.neutral[200]} 14px, ${palette.neutral[200]} 17px, transparent 17px, transparent 20px, ${palette.neutral[200]} 20px, ${palette.neutral[200]} 23px, transparent 23px)`
               }}/>
           </>}
-        </div>}
+        </div>
         </>}
 
       </div>
