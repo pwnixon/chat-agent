@@ -256,18 +256,30 @@ function ThinkingTrace({ steps, instant=false }) {
   );
 }
 
-// ─── ThinkingToggle — collapsible wrapper for ThinkingTrace ──────────────────
-function ThinkingToggle({ steps, expanded, setExpanded, instant=false }) {
+// ─── Shared expand/collapse toggle header ────────────────────────────────────
+function ExpandToggle({ label, expanded, onToggle, children, withBox=true }) {
   return (
     <div>
-      <div style={{display:"flex",gap:4,alignItems:"center",cursor:"pointer"}} onClick={()=>setExpanded(o=>!o)}>
+      <div style={{display:"flex",gap:4,alignItems:"center",cursor:"pointer"}} onClick={()=>onToggle(o=>!o)}>
         <div style={{transition:"transform 0.18s",transform:expanded?"rotate(90deg)":"rotate(0deg)",display:"flex",alignItems:"center",color:palette.text.disabled}}>
           <MuiIcon fontSize="inherit">chevron_right</MuiIcon>
         </div>
-        <span style={{...typography.micro,color:palette.text.secondary}}>THINKING</span>
+        <span style={{...typography.micro,color:palette.text.secondary}}>{label}</span>
       </div>
-      {expanded&&<Box sx={{mt:"6px",p:"8px 10px",border:`1px solid ${color.divider}`,borderRadius:`${radius.lg}px`,display:"flex",flexDirection:"column",gap:"2px"}}><ThinkingTrace steps={steps} instant={instant}/></Box>}
+      {expanded&&(withBox
+        ? <Box sx={{mt:"6px",p:"8px 10px",border:`1px solid ${color.divider}`,borderRadius:`${radius.lg}px`,display:"flex",flexDirection:"column",gap:"2px"}}>{children}</Box>
+        : children
+      )}
     </div>
+  );
+}
+
+// ─── ThinkingToggle — collapsible wrapper for ThinkingTrace ──────────────────
+function ThinkingToggle({ steps, expanded, setExpanded, instant=false }) {
+  return (
+    <ExpandToggle label="THINKING" expanded={expanded} onToggle={setExpanded}>
+      <ThinkingTrace steps={steps} instant={instant}/>
+    </ExpandToggle>
   );
 }
 
@@ -299,49 +311,29 @@ function ReasoningTrace({ reasoning, expanded, setExpanded }) {
   },[expanded, reasoning]);
 
   return (
-    <div>
-      <div style={{display:"flex",gap:4,alignItems:"center",cursor:"pointer"}} onClick={()=>setExpanded(o=>!o)}>
-        <div style={{transition:"transform 0.18s",transform:expanded?"rotate(90deg)":"rotate(0deg)",display:"flex",alignItems:"center",color:palette.text.disabled}}>
-          <MuiIcon fontSize="inherit">chevron_right</MuiIcon>
+    <ExpandToggle label="WHY" expanded={expanded} onToggle={setExpanded}>
+      {reasoning.map((step,i)=>(
+        <div key={i} style={{
+          display:"flex",alignItems:"flex-start",gap:6,padding:"3px 0",
+          opacity:i<visible?1:0, transform:i<visible?"translateY(0)":"translateY(4px)",
+          transition:"opacity 0.2s ease, transform 0.2s ease",
+        }}>
+          <div style={{width:4,height:4,borderRadius:"50%",background:palette.text.secondary,flexShrink:0,marginTop:6}}/>
+          <span style={{...typography.body2,color:palette.text.secondary,lineHeight:"18px"}}>{step}</span>
         </div>
-        <span style={{...typography.micro,color:palette.text.secondary}}>WHY</span>
-      </div>
-      {expanded&&(
-        <Box sx={{mt:"6px",p:"8px 10px",border:`1px solid ${color.divider}`,borderRadius:`${radius.lg}px`,display:"flex",flexDirection:"column",gap:"2px"}}>
-          {reasoning.map((step,i)=>(
-            <div key={i} style={{
-              display:"flex",alignItems:"flex-start",gap:6,padding:"3px 0",
-              opacity:i<visible?1:0, transform:i<visible?"translateY(0)":"translateY(4px)",
-              transition:"opacity 0.2s ease, transform 0.2s ease",
-            }}>
-              <div style={{width:4,height:4,borderRadius:"50%",background:palette.text.secondary,flexShrink:0,marginTop:6}}/>
-              <span style={{...typography.body2,color:palette.text.secondary,lineHeight:"18px"}}>{step}</span>
-            </div>
-          ))}
-        </Box>
-      )}
-    </div>
+      ))}
+    </ExpandToggle>
   );
 }
 
 // ─── SourcesPanel — source activities ────────────────────────────────────────
 function SourcesPanel({ data=ACTIVITY_DONE, expanded, setExpanded }) {
   return (
-    <div>
-      <div style={{display:"flex",gap:4,alignItems:"center",cursor:"pointer"}} onClick={()=>setExpanded(o=>!o)}>
-        <div style={{transition:"transform 0.18s",transform:expanded?"rotate(90deg)":"rotate(0deg)",display:"flex",alignItems:"center",color:palette.text.disabled}}>
-          <MuiIcon fontSize="inherit">chevron_right</MuiIcon>
-        </div>
-        <span style={{...typography.micro,color:palette.text.secondary}}>
-          SOURCES USED ({data.length})
-        </span>
+    <ExpandToggle label={`SOURCES USED (${data.length})`} expanded={expanded} onToggle={setExpanded} withBox={false}>
+      <div style={{marginTop:6,border:`1px solid ${color.divider}`,borderRadius:6,overflow:"hidden"}}>
+        {data.map((item,i)=><ActivityRow key={`s${i}`} item={item} i={i} total={data.length}/>)}
       </div>
-      {expanded&&(
-        <div style={{marginTop:6,border:`1px solid ${color.divider}`,borderRadius:6,overflow:"hidden"}}>
-          {data.map((item,i)=><ActivityRow key={`s${i}`} item={item} i={i} total={data.length}/>)}
-        </div>
-      )}
-    </div>
+    </ExpandToggle>
   );
 }
 
@@ -370,10 +362,8 @@ function Phrases({ active, expanded, setExpanded }) {
         <Typography ref={ref} component="div" sx={{...typography.body1,color:palette.text.secondary,fontStyle:"italic",flex:1}} />
       </div>
       {expanded&&(
-        <div style={{paddingLeft:20}}>
-          <div style={{marginTop:6,border:`1px solid ${color.divider}`,borderRadius:6,overflow:"hidden"}}>
-            {ACTIVITY.map((item,i)=><ActivityRow key={i} item={item} i={i} total={ACTIVITY.length}/>)}
-          </div>
+        <div style={{paddingLeft:20,marginTop:6,border:`1px solid ${color.divider}`,borderRadius:6,overflow:"hidden"}}>
+          {ACTIVITY.map((item,i)=><ActivityRow key={i} item={item} i={i} total={ACTIVITY.length}/>)}
         </div>
       )}
     </div>
@@ -770,12 +760,16 @@ function ResponseRow({ html, instant=false, onStreamDone, pageNum, totalPages, o
   );
 }
 
+// ─── Shared write-action tone helper ─────────────────────────────────────────
+function writeActionTone(status) {
+  const shade = status==="confirmed" ? palette.success[300] : status==="denied" ? palette.error[300] : palette.accent1[300];
+  return { statusColor: darken(shade, 0.6), borderColor: lighten(shade, 0.5), bgColor: lighten(shade, 0.9) };
+}
+
 // ─── Write action confirmation ────────────────────────────────────────────────
 function WriteAction({ action, detail, items, onConfirm, onDeny, status }) {
   const isDone = status==="confirmed" || status==="denied";
-  const statusColor = status==="confirmed" ? darken(palette.success[300], 0.6) : status==="denied" ? darken(palette.error[300], 0.6) : darken(palette.accent1[300], 0.6);
-  const borderColor = status==="confirmed" ? lighten(palette.success[300], 0.5) : status==="denied" ? lighten(palette.error[300], 0.5) : lighten(palette.accent1[300], 0.5);
-  const bgColor     = status==="confirmed" ? lighten(palette.success[300], 0.9) : status==="denied" ? lighten(palette.error[300], 0.9) : lighten(palette.accent1[300], 0.9);
+  const { statusColor, borderColor, bgColor } = writeActionTone(status);
   return (
     <Box>
       {/* Label */}
@@ -828,17 +822,14 @@ function WriteAction({ action, detail, items, onConfirm, onDeny, status }) {
 function WriteActionChoice({ action, detail, choices, selected, status, onSelect, onConfirm, onDeny }) {
   const isDone = status==="confirmed" || status==="denied";
   const canAct = !!selected && !isDone;
-  const tone = status==="confirmed" ? "confirmed" : status==="denied" ? "denied" : "pending";
-  const statusColor = tone==="confirmed" ? darken(palette.success[300], 0.6) : tone==="denied" ? darken(palette.error[300], 0.6) : darken(palette.accent1[300], 0.6);
-  const borderColor = tone==="confirmed" ? lighten(palette.success[300], 0.5) : tone==="denied" ? lighten(palette.error[300], 0.5) : lighten(palette.accent1[300], 0.5);
-  const bgColor     = tone==="confirmed" ? lighten(palette.success[300], 0.9) : tone==="denied" ? lighten(palette.error[300], 0.9) : lighten(palette.accent1[300], 0.9);
+  const { statusColor, borderColor, bgColor } = writeActionTone(status);
   return (
     <Box>
       {/* Label */}
       <Stack direction="row" alignItems="center" gap="6px" sx={{mb:1}}>
         <Box sx={{width:6,height:6,borderRadius:"50%",bgcolor:statusColor,flexShrink:0}}/>
         <Typography sx={{...typography.overline, color:statusColor}}>
-          {tone==="confirmed"?"WRITE ACTION APPROVED":tone==="denied"?"WRITE ACTION DENIED":"WRITE ACTION REQUESTED"}
+          {status==="confirmed"?"WRITE ACTION APPROVED":status==="denied"?"WRITE ACTION DENIED":"WRITE ACTION REQUESTED"}
         </Typography>
       </Stack>
       {/* Card */}
@@ -879,12 +870,12 @@ function WriteActionChoice({ action, detail, choices, selected, status, onSelect
                     <Typography sx={{...typography.body1, fontWeight:600, color:palette.neutral.black}}>{c.name}</Typography>
                     {c.recommended&&!picked&&!isDone&&<Typography component="span" sx={{...typography.overline, fontSize:"9px", color:C_PRIMARY, background:`${C_PRIMARY}14`, padding:"1px 5px", borderRadius:`${radius.sm}px`}}>RECOMMENDED</Typography>}
                     {picked&&!isDone&&<Box sx={{width:6,height:6,borderRadius:"50%",bgcolor:C_PRIMARY,flexShrink:0}}/>}
-                    {picked&&isDone&&tone==="confirmed"&&<MuiIcon sx={{fontSize:14, color:palette.success[500]}}>check</MuiIcon>}
+                    {picked&&isDone&&status==="confirmed"&&<MuiIcon sx={{fontSize:14, color:palette.success[500]}}>check</MuiIcon>}
                   </Stack>
                   <Typography sx={{...typography.body2, color:palette.text.secondary, mt:"1px"}}>{c.term} term</Typography>
                 </Box>
                 <Box sx={{textAlign:"right",flexShrink:0,ml:"12px"}}>
-                  <Typography sx={{...typography.body1, fontWeight:600, color:picked&&isDone&&tone==="confirmed"?palette.success[500]:palette.neutral.black}}>{c.savings}</Typography>
+                  <Typography sx={{...typography.body1, fontWeight:600, color:picked&&isDone&&status==="confirmed"?palette.success[500]:palette.neutral.black}}>{c.savings}</Typography>
                   <Typography sx={{...typography.caption, color:palette.text.secondary, mt:"1px"}}>monthly savings</Typography>
                 </Box>
               </Paper>
@@ -920,7 +911,7 @@ function WriteActionChoice({ action, detail, choices, selected, status, onSelect
             </>
           ):(
             <Typography sx={{...typography.body2, fontWeight:500, color:statusColor}}>
-              {tone==="confirmed"?`✓ ${choices.find(c=>c.id===selected)?.name} submitted`:"✕ No plan applied — no changes made"}
+              {status==="confirmed"?`✓ ${choices.find(c=>c.id===selected)?.name} submitted`:"✕ No plan applied — no changes made"}
             </Typography>
           )}
         </Stack>
@@ -1365,6 +1356,20 @@ function getInitialPanelState() {
   return             { open: false, mode: w >= BP_MED ? 'sidebar' : 'overlay' };
 }
 
+// ─── Panel mode toggle group (shared by header and bottom rail) ───────────────
+function PanelModeToggleGroup({ panelMode, onChange, tooltipPlacement='bottom' }) {
+  const p = tooltipPlacement;
+  return (
+    <ToggleButtonGroup size={panelMode==='fullscreen'?'medium':'small'} value={panelMode} exclusive onChange={(_,val)=>onChange(val)} sx={{flexShrink:0}}>
+      <Tooltip title="Dock right"    placement={p} arrow><ToggleButton value="sidebar">   <MuiIcon baseClassName="material-symbols-outlined">dock_to_right</MuiIcon></ToggleButton></Tooltip>
+      <Tooltip title="Dock bottom"   placement={p} arrow><ToggleButton value="bottom">    <MuiIcon baseClassName="material-symbols-outlined">dock_to_bottom</MuiIcon></ToggleButton></Tooltip>
+      <Tooltip title="Overlay"       placement={p} arrow><ToggleButton value="overlay">   <MuiIcon baseClassName="material-symbols-outlined">ad_group</MuiIcon></ToggleButton></Tooltip>
+      <Tooltip title="Fullscreen"    placement={p} arrow><ToggleButton value="fullscreen"><MuiIcon>crop_free</MuiIcon></ToggleButton></Tooltip>
+      <Tooltip title="Close panel"   placement={p} arrow><ToggleButton value="close">     <MuiIcon>close</MuiIcon></ToggleButton></Tooltip>
+    </ToggleButtonGroup>
+  );
+}
+
 export default function App() {
   const demo = new URLSearchParams(window.location.search).get('demo');
   const dev = demo === 'dev';
@@ -1764,6 +1769,9 @@ export default function App() {
   }
 
   const compact = panelMode !== 'fullscreen';
+  const panelVisible = panelOpen && panelMode !== 'rail';
+  const isSidebarOpen = panelOpen && panelMode === 'sidebar';
+  function openPanel(){ window.innerWidth>=BP_MED ? openSidebar() : (setPanelMode('overlay'), setPanelOpen(true)); }
   const chatPanel = (<>
     {/* Chat header — default: 48px (sidebar/overlay), fullwidth: 64px (fullscreen) */}
     <Box
@@ -1794,64 +1802,27 @@ export default function App() {
       </Stack>
       {/* Right: action icons + ToggleButtonGroup */}
       <Stack data-no-drag direction="row" alignItems="center" gap={1.5} sx={{flexShrink:0}}>
-        {panelMode==='bottom' && (
+        {compact && <>
           <IconButton sx={{width:28,height:28,p:0,flexShrink:0}} title="New chat" onClick={newChat}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
               <path d="M21.99 4C21.99 2.9 21.1 2 20 2H4C2.9 2 2 2.9 2 4V16C2 17.1 2.9 18 4 18H18L22 22L21.99 4ZM17 11H13V15H11V11H7V9H11V5H13V9H17V11Z" fill={C_TERTIARY}/>
             </svg>
           </IconButton>
-        )}
-        {compact && panelMode!=='bottom' && <>
-          <IconButton sx={{width:28,height:28,p:0,flexShrink:0}} title="New chat" onClick={newChat}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-              <path d="M21.99 4C21.99 2.9 21.1 2 20 2H4C2.9 2 2 2.9 2 4V16C2 17.1 2.9 18 4 18H18L22 22L21.99 4ZM17 11H13V15H11V11H7V9H11V5H13V9H17V11Z" fill={C_TERTIARY}/>
-            </svg>
-          </IconButton>
-          <IconButton sx={{width:28,height:28,p:0,flexShrink:0}} title="Chat history" onClick={()=>setShowMenu(o=>!o)}>
-            <MuiIcon sx={{fontSize:22,color:showMenu?palette.text.primary:palette.text.secondary}}>view_list</MuiIcon>
-          </IconButton>
-          <Box sx={{width:"1px",bgcolor:color.divider,alignSelf:"stretch",flexShrink:0}}/>
+          {panelMode!=='bottom' && <>
+            <IconButton sx={{width:28,height:28,p:0,flexShrink:0}} title="Chat history" onClick={()=>setShowMenu(o=>!o)}>
+              <MuiIcon sx={{fontSize:22,color:showMenu?palette.text.primary:palette.text.secondary}}>view_list</MuiIcon>
+            </IconButton>
+            <Box sx={{width:"1px",bgcolor:color.divider,alignSelf:"stretch",flexShrink:0}}/>
+          </>}
         </>}
-        <ToggleButtonGroup
-          size={panelMode==='fullscreen' ? 'medium' : 'small'}
-          value={panelMode}
-          exclusive
-          onChange={(e,val)=>{
-            if(val==='close'){
-              if(panelMode==='bottom') closeToRail();
-              else if(window.innerWidth>=BP_WIDE) setPanelMode('rail');
-              else closeSidebar();
-            } else if(val==='bottom') openBottom();
-            else if(val) { setPanelMode(val); }
-          }}
-          sx={{flexShrink:0}}
-        >
-          <Tooltip title="Dock right" placement="bottom" arrow>
-            <ToggleButton value="sidebar">
-              <MuiIcon baseClassName="material-symbols-outlined" >dock_to_right</MuiIcon>
-            </ToggleButton>
-          </Tooltip>
-          <Tooltip title="Dock bottom" placement="bottom" arrow>
-            <ToggleButton value="bottom">
-              <MuiIcon baseClassName="material-symbols-outlined" >dock_to_bottom</MuiIcon>
-            </ToggleButton>
-          </Tooltip>
-          <Tooltip title="Overlay" placement="bottom" arrow>
-            <ToggleButton value="overlay">
-              <MuiIcon baseClassName="material-symbols-outlined" >ad_group</MuiIcon>
-            </ToggleButton>
-          </Tooltip>
-          <Tooltip title="Fullscreen" placement="bottom" arrow>
-            <ToggleButton value="fullscreen">
-              <MuiIcon >crop_free</MuiIcon>
-            </ToggleButton>
-          </Tooltip>
-          <Tooltip title="Close panel" placement="bottom" arrow>
-            <ToggleButton value="close">
-              <MuiIcon >close</MuiIcon>
-            </ToggleButton>
-          </Tooltip>
-        </ToggleButtonGroup>
+        <PanelModeToggleGroup panelMode={panelMode} onChange={val=>{
+          if(val==='close'){
+            if(panelMode==='bottom') closeToRail();
+            else if(window.innerWidth>=BP_WIDE) setPanelMode('rail');
+            else closeSidebar();
+          } else if(val==='bottom') openBottom();
+          else if(val) setPanelMode(val);
+        }}/>
       </Stack>
       {/* Animated gradient bottom border */}
       <div style={{
@@ -2002,8 +1973,8 @@ export default function App() {
 
         {/* Page content — never unmounts */}
         <div style={{flex:1, overflowY:'auto', minWidth:0,
-          paddingBottom: panelOpen && panelMode==='bottom' ? panelHeight + 16 : 0}}>
-          <PagePlaceholder panelOpen={panelOpen && panelMode==='sidebar'}/>
+          paddingBottom: panelVisible && panelMode==='bottom' ? panelHeight + 16 : 0}}>
+          <PagePlaceholder panelOpen={isSidebarOpen}/>
         </div>
 
         {/* Launch FAB — shown when panel is closed */}
@@ -2027,7 +1998,7 @@ export default function App() {
                     onClick={()=>{
                       setShowFabBubble(false);
                       fabBubbleFired.current=true;
-                      window.innerWidth>=BP_MED?openSidebar():(setPanelMode('overlay'),setPanelOpen(true));
+                      openPanel();
                       newChat();
                       setTimeout(()=>sendPrompt(SUGGESTED_PROMPTS[0]),400);
                     }}
@@ -2046,7 +2017,7 @@ export default function App() {
 
             {/* Active FAB */}
             {fabVariant==='a' && (
-              <Box sx={{position:'relative',width:60,height:60,filter:`drop-shadow(0 4px 10px ${C_PRIMARY}40)`}} onClick={()=>{window.innerWidth>=BP_MED?openSidebar():(setPanelMode('overlay'),setPanelOpen(true));}}>
+              <Box sx={{position:'relative',width:60,height:60,filter:`drop-shadow(0 4px 10px ${C_PRIMARY}40)`}} onClick={()=>{openPanel();}}>
                 <Box sx={{position:'absolute',inset:0,borderRadius:'50%',overflow:'hidden'}}>
                   <Box sx={{position:'absolute',inset:-20,background:`conic-gradient(from 0deg,${C_PRIMARY},${C_TERTIARY},${C_PRIMARY},${C_SECONDARY},${C_PRIMARY})`,animation:'rotateFabGradient 3s linear infinite'}}/>
                   <Box sx={{position:'absolute',inset:'2px',borderRadius:'50%',bgcolor:'background.paper'}}/>
@@ -2057,7 +2028,7 @@ export default function App() {
               </Box>
             )}
             {fabVariant==='b' && (
-              <Box sx={{position:'relative',width:64,height:64}} onClick={()=>{window.innerWidth>=BP_MED?openSidebar():(setPanelMode('overlay'),setPanelOpen(true));}}>
+              <Box sx={{position:'relative',width:64,height:64}} onClick={()=>{openPanel();}}>
                 <Box sx={{position:'absolute',inset:0,borderRadius:'50%',bgcolor:C_PRIMARY,overflow:'hidden',isolation:'isolate',zIndex:1,WebkitMaskImage:'-webkit-radial-gradient(white,black)',maskImage:'radial-gradient(white,black)'}}>
                   <Box style={{position:'absolute',borderRadius:'50%',filter:'blur(12px)',opacity:0.9,backgroundColor:C_SECONDARY,width:'140%',height:'140%',top:'-50%',left:'-50%',animation:'moveBlue 7s infinite alternate cubic-bezier(0.4,0,0.2,1)'}}/>
                   <Box style={{position:'absolute',borderRadius:'50%',filter:'blur(12px)',opacity:0.9,backgroundColor:C_TERTIARY,width:'120%',height:'120%',bottom:'-30%',right:'-30%',animation:'movePink 8s infinite alternate cubic-bezier(0.4,0,0.2,1)'}}/>
@@ -2069,7 +2040,7 @@ export default function App() {
               </Box>
             )}
             {fabVariant==='c' && (
-              <Box sx={{position:'relative',width:56,height:56}} onClick={()=>{window.innerWidth>=BP_MED?openSidebar():(setPanelMode('overlay'),setPanelOpen(true));}}>
+              <Box sx={{position:'relative',width:56,height:56}} onClick={()=>{openPanel();}}>
                 <Box sx={{position:'absolute',inset:-6,borderRadius:'50%',zIndex:0,background:`conic-gradient(from 0deg,${C_PRIMARY},${C_TERTIARY},${C_PRIMARY},${C_SECONDARY},${C_PRIMARY})`,animation:'rotateFabGradientSlow 8s linear infinite',filter:'blur(7px)',opacity:0.7}}/>
                 <Fab sx={{position:'absolute',inset:0,width:'100%',height:'100%',zIndex:1,bgcolor:palette.surface,animation:'fabGlow 2.5s ease-in-out infinite','&:hover':{bgcolor:palette.neutral[50],boxShadow:'none'}}}>
                   <ArcheraLogo size={24}/>
@@ -2088,7 +2059,7 @@ export default function App() {
           </Stack>
         )}
 
-        {panelOpen&&<>
+        {panelVisible&&<>
         {/* Left resize handle — sidebar only; click to collapse, drag to resize */}
         {panelMode==='sidebar' && (
           <Tooltip title="Click to collapse · Drag to resize" placement="left" arrow>
@@ -2129,28 +2100,18 @@ export default function App() {
               </Box>
             </Tooltip>
             <Box sx={{flex:1}}/>
-            {/* Same toggle buttons as the panel header */}
-            <ToggleButtonGroup
-              size="small"
-              value={panelMode}
-              exclusive
-              onChange={(e,val)=>{
-                if(val==='close'){ setPanelOpen(false); }
-                else if(val==='bottom') openBottom();
-                else if(val) setPanelMode(val);
-              }}
-            >
-              <Tooltip title="Dock right" placement="top" arrow><ToggleButton value="sidebar"><MuiIcon baseClassName="material-symbols-outlined">dock_to_right</MuiIcon></ToggleButton></Tooltip>
-              <Tooltip title="Dock bottom" placement="top" arrow><ToggleButton value="bottom"><MuiIcon baseClassName="material-symbols-outlined">dock_to_bottom</MuiIcon></ToggleButton></Tooltip>
-              <Tooltip title="Overlay" placement="top" arrow><ToggleButton value="overlay"><MuiIcon baseClassName="material-symbols-outlined">ad_group</MuiIcon></ToggleButton></Tooltip>
-              <Tooltip title="Fullscreen" placement="top" arrow><ToggleButton value="fullscreen"><MuiIcon>crop_free</MuiIcon></ToggleButton></Tooltip>
-              <Tooltip title="Close panel" placement="top" arrow><ToggleButton value="close"><MuiIcon>close</MuiIcon></ToggleButton></Tooltip>
-            </ToggleButtonGroup>
+            <PanelModeToggleGroup panelMode={panelMode} tooltipPlacement="top" onChange={val=>{
+              if(val==='close') setPanelOpen(false);
+              else if(val==='bottom') openBottom();
+              else if(val) setPanelMode(val);
+            }}/>
           </Box>
         )}
 
-        {/* Chat panel — always mounted when panelOpen; rail hides it with display:none to preserve state */}
-        <div ref={panelRef} style={panelMode==='rail' ? {display:'none'} : {
+        </>}
+
+        {/* Chat panel — always mounted to preserve streaming/animation state across open/close/rail */}
+        <div ref={panelRef} style={(!panelOpen || panelMode==='rail') ? {display:'none'} : {
           ...(panelMode==='sidebar' ? {
             position:'relative',
             width:panelWidth, flexShrink:0,
@@ -2218,7 +2179,6 @@ export default function App() {
               }}/>
           </>}
         </div>
-        </>}
 
       </div>
 
