@@ -761,15 +761,17 @@ function ResponseRow({ html, instant=false, onStreamDone, pageNum, totalPages, o
 }
 
 // ─── Shared write-action tone helper ─────────────────────────────────────────
-function writeActionTone(status) {
-  const shade = status==="confirmed" ? palette.success[300] : status==="denied" ? palette.error[300] : palette.accent1[300];
+// flow-based cards (plan/automation) use brandPrimary for pending; others use accent1
+function writeActionTone(status, flow) {
+  const pendingKey = flow ? 'brandPrimary' : 'accent1';
+  const shade = status==="confirmed" ? palette.success[300] : status==="denied" ? palette.error[300] : palette[pendingKey][300];
   return { statusColor: darken(shade, 0.6), borderColor: lighten(shade, 0.5), bgColor: lighten(shade, 0.9) };
 }
 
 // ─── Write action confirmation ────────────────────────────────────────────────
-function WriteAction({ action, detail, items, onConfirm, onDeny, status }) {
+function WriteAction({ action, detail, items, onConfirm, onDeny, status, flow }) {
   const isDone = status==="confirmed" || status==="denied";
-  const { statusColor, borderColor, bgColor } = writeActionTone(status);
+  const { statusColor, borderColor, bgColor } = writeActionTone(status, flow);
   return (
     <Box>
       {/* Label */}
@@ -799,8 +801,8 @@ function WriteAction({ action, detail, items, onConfirm, onDeny, status }) {
           {!isDone?(
             <>
               <Stack direction="row" gap="4px" justifyContent="flex-end">
-                <Button onClick={onDeny}>Deny</Button>
-                <Button variant="contained" onClick={onConfirm}>Confirm</Button>
+                <Button color={flow?'secondary':'inherit'} onClick={onDeny}>Deny</Button>
+                <Button variant="contained" color={flow?'secondary':'primary'} onClick={onConfirm}>Confirm</Button>
               </Stack>
               <Stack direction="row" gap="4px" alignItems="center">
                 <MuiIcon baseClassName="material-icons-outlined" sx={{fontSize:16,color:palette.warning[500],flexShrink:0}}>warning_amber</MuiIcon>
@@ -819,10 +821,10 @@ function WriteAction({ action, detail, items, onConfirm, onDeny, status }) {
 }
 
 // ─── Write action: choice (pick one of N options) ─────────────────────────────
-function WriteActionChoice({ action, detail, choices, selected, status, onSelect, onConfirm, onDeny }) {
+function WriteActionChoice({ action, detail, choices, selected, status, onSelect, onConfirm, onDeny, flow }) {
   const isDone = status==="confirmed" || status==="denied";
   const canAct = !!selected && !isDone;
-  const { statusColor, borderColor, bgColor } = writeActionTone(status);
+  const { statusColor, borderColor, bgColor } = writeActionTone(status, flow);
   return (
     <Box>
       {/* Label */}
@@ -888,7 +890,7 @@ function WriteActionChoice({ action, detail, choices, selected, status, onSelect
             <>
               <Button
                 variant="contained"
-                color="success"
+                color={flow?'secondary':'success'}
                 size="small"
                 onClick={canAct?onConfirm:undefined}
                 disabled={!canAct}
@@ -898,11 +900,12 @@ function WriteActionChoice({ action, detail, choices, selected, status, onSelect
               </Button>
               <Button
                 variant="outlined"
+                color={flow?'secondary':'inherit'}
                 size="small"
                 onClick={canAct?onDeny:undefined}
                 disabled={!canAct}
                 startIcon={<MuiIcon sx={{fontSize:"12px !important"}}>close</MuiIcon>}
-                sx={{textTransform:"none",borderRadius:`${radius.sm}px`,py:"6px",px:"14px",color:palette.text.secondary,borderColor:color.divider,opacity:canAct?1:0.35,transition:"opacity 0.15s"}}>
+                sx={{textTransform:"none",borderRadius:`${radius.sm}px`,py:"6px",px:"14px",opacity:canAct?1:0.35,transition:"opacity 0.15s"}}>
                 Deny
               </Button>
               <Typography sx={{...typography.caption, color:palette.text.disabled, ml:"4px"}}>
