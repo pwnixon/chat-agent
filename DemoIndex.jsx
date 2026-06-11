@@ -17,9 +17,16 @@ const DEMOS = [
     status: "live",
   },
   {
-    demo: "chat",
+    demo: "savings_analysis",
     title: "Chat: Savings Analysis",
     desc: "Full conversation: spend analysis, step cards, commitment plan selection, write action confirmation, and automation offer.",
+    version: "v1",
+    status: "live",
+  },
+  {
+    demo: "received",
+    title: "Chat: Received Share",
+    desc: "Receiving a conversation shared by a teammate — notification badge, shared metadata, and the continue-the-conversation flow.",
     version: "v1",
     status: "live",
   },
