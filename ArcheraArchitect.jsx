@@ -2323,7 +2323,7 @@ export default function App() {
       <Box ref={scrollRef} onScroll={handleScroll} sx={{flex:1,overflowY:"auto",p:"24px 24px 0"}}>
         <Container disableGutters maxWidth={panelMode==='fullscreen'||panelMode==='bottom'?'md':false}>
         {msgs.length===0&&(
-          <Box sx={{display:"flex",flexDirection:"column",alignItems:"flex-start",pt:8,mb:4}}>
+          <Box sx={{display:"flex",flexDirection:"column",alignItems:"flex-start",pt:panelMode==='bottom'?2:8,mb:4}}>
             <Box sx={{width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center",mb:2}}>
               <Icon mode="breathe"/>
             </Box>
