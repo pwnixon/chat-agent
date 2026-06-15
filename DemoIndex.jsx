@@ -1,6 +1,7 @@
 import { useState } from "react";
 import palette from '../_template/palettes/archera-palette';
 import { color, typography } from '../_template/tokens';
+import { AppHeader } from '../_template/AppShell';
 
 // ─── Edit this to add / remove demos ─────────────────────────────────────────
 const PROJECT = {
@@ -105,15 +106,8 @@ function Card({ title, desc, version, status, onClick }) {
 export default function DemoIndex() {
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: palette.background }}>
-      {/* Header */}
-      <header style={{ background: palette.header, height: 60, display: "flex", alignItems: "center", padding: "0 40px", gap: 12, flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <ArcheraLogo size={22} />
-          <span style={{ color: palette.neutral.white, ...typography.h5, fontWeight: 600, letterSpacing: "-0.2px" }}>archera</span>
-        </div>
-        <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)" }} />
-        <span style={{ color: "rgba(255,255,255,0.55)", ...typography.body1 }}>Prototypes</span>
-      </header>
+      {/* Standard Archera header — logo, "Prototypes" title, no breadcrumb */}
+      <AppHeader pageName="Prototypes" />
 
       {/* Content */}
       <main style={{ maxWidth: 960, margin: "0 auto", padding: "48px 40px 80px", width: "100%" }}>
