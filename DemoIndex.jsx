@@ -1,7 +1,7 @@
 import { useState } from "react";
-import palette from '../_template/palettes/archera-palette';
-import { color, typography } from '../_template/tokens';
-import { AppHeader } from '../_template/AppShell';
+import palette from '@archera/design-system/palettes/archera-palette';
+import { color, typography } from '@archera/design-system/tokens';
+import { AppHeader } from '@archera/design-system/AppShell';
 
 // ─── Edit this to add / remove demos ─────────────────────────────────────────
 const PROJECT = {

@@ -1,9 +1,9 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Box, Stack, Typography, IconButton, Paper, InputBase, Button, ButtonBase, Divider, Chip, ToggleButtonGroup, ToggleButton, Tooltip, Container, TextField, Select, MenuItem, FormControl, InputAdornment, Icon as MuiIcon, Menu, ListItemIcon, ListItemText, Link, Collapse, Fab, Skeleton, Fade, Dialog, DialogTitle, DialogContent, DialogActions, Badge, Checkbox, FormControlLabel, Alert, Snackbar } from '@mui/material';
 import { lighten, darken, alpha } from '@mui/material/styles';
-import AppShell from '../_template/AppShell';
-import palette from '../_template/palettes/archera-palette';
-import { color, typography, radius } from '../_template/tokens';
+import AppShell from '@archera/design-system/AppShell';
+import palette from '@archera/design-system/palettes/archera-palette';
+import { color, typography, radius } from '@archera/design-system/tokens';
 
 // Animation color constants — must be plain hex strings for the SVG lerp functions
 const C_PRIMARY   = palette.brandPrimary[500];
