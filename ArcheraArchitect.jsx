@@ -2582,13 +2582,13 @@ export default function App() {
 
         {/* Rail — collapsed strip (outside panelVisible guard — rail mode sets panelVisible=false) */}
         {panelOpen && panelMode==='rail' && lastMode!=='bottom' && (
-          <Box sx={{width:40,flexShrink:0,borderLeft:`1px solid ${color.divider}`,bgcolor:palette.surface,
-            display:'flex',flexDirection:'column',alignItems:'center',pt:2,pb:1,
-            transition:'background 0.15s'}}>
+          <Box onClick={()=>lastMode==='sidebar'?openSidebar():setPanelMode(lastMode)}
+            sx={{width:40,flexShrink:0,borderLeft:`1px solid ${color.divider}`,bgcolor:palette.surface,
+              display:'flex',flexDirection:'column',alignItems:'center',pt:2,pb:1,
+              cursor:'pointer','&:hover':{bgcolor:palette.neutral[50]},transition:'background 0.15s'}}>
             <Tooltip title="Open Archera AI" placement="left" arrow>
-              <Box onClick={()=>lastMode==='sidebar'?openSidebar():setPanelMode(lastMode)}
-                sx={{cursor:'pointer',p:"6px",borderRadius:1,display:'flex',alignItems:'center',justifyContent:'center',
-                  '&:hover':{bgcolor:palette.neutral[100]},transition:'background 0.15s'}}>
+              <Box sx={{p:"6px",borderRadius:1,display:'flex',alignItems:'center',justifyContent:'center',
+                '&:hover':{bgcolor:palette.neutral[100]},transition:'background 0.15s'}}>
                 <ArcheraLogo size={20}/>
               </Box>
             </Tooltip>
