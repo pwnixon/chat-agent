@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite --open",
     "build": "vite build",
-    "audit": "node scripts/audit.js"
+    "audit": "ds-audit"
   },
   "dependencies": {
     "@archera/design-system": "github:pwnixon/design-system#v1.0.0",
