@@ -168,12 +168,12 @@ function ActivityRow({ item, i, total }) {
   return (
     <Box sx={{
       display:"flex",gap:1,alignItems:"flex-start",
-      p:"7px 10px",
+      py:0.875, px:1.25,
       borderBottom:i<total-1?`1px solid ${color.divider}`:"none",
       background:item.status==="active"?`${C_PRIMARY}08`:item.status==="pending"?"rgba(0,0,0,0.01)":palette.surface,
       opacity:item.status==="pending"?0.5:1,
     }}>
-      <Box sx={{mt:"1px",flexShrink:0}}><ActivityTypeIcon type={item.type} isActive={item.status==="active"}/></Box>
+      <Box sx={{mt:0.125,flexShrink:0}}><ActivityTypeIcon type={item.type} isActive={item.status==="active"}/></Box>
       <Box sx={{flex:1,minWidth:0}}>
         <Stack direction="row" alignItems="center" gap={0.75}>
           <Typography sx={{...typography.body2,fontWeight:500,color:item.status==="active"?C_PRIMARY:palette.text.primary,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.label}</Typography>
@@ -181,7 +181,7 @@ function ActivityRow({ item, i, total }) {
           {item.status==="done"&&<Typography component="span" sx={{...typography.micro,color:palette.success[500],background:`${palette.success[500]}14`,borderRadius:"3px",padding:"1px 4px",flexShrink:0}}>DONE</Typography>}
           {item.status==="pending"&&<Typography component="span" sx={{...typography.micro,color:palette.text.secondary,background:"rgba(0,0,0,0.05)",borderRadius:"3px",padding:"1px 4px",flexShrink:0}}>PENDING</Typography>}
         </Stack>
-        <Typography sx={{...typography.caption,color:palette.text.secondary,mt:"1px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.detail}</Typography>
+        <Typography sx={{...typography.caption,color:palette.text.secondary,mt:0.125,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.detail}</Typography>
       </Box>
     </Box>
   );
@@ -267,7 +267,7 @@ function ExpandToggle({ label, expanded, onToggle, children, withBox=true }) {
         <span style={{...typography.micro,color:palette.text.secondary}}>{label}</span>
       </div>
       {expanded&&(withBox
-        ? <Box sx={{mt:"6px",p:"8px 10px",border:`1px solid ${color.divider}`,borderRadius:`${radius.lg}px`,display:"flex",flexDirection:"column",gap:"2px"}}>{children}</Box>
+        ? <Box sx={{mt:0.75,py:1, px:1.25,border:`1px solid ${color.divider}`,borderRadius:`${radius.lg}px`,display:"flex",flexDirection:"column",gap:0.25}}>{children}</Box>
         : children
       )}
     </div>
@@ -465,7 +465,7 @@ function Welcome({ onPrompt, stacked=false }) {
   return (
     <Box sx={{width:'100%', minWidth:0}}>
       <Typography sx={{...typography.h4,color:palette.text.primary}}>{l1}</Typography>
-      {l2&&<Typography sx={{...typography.body3,color:palette.text.secondary,mt:"6px"}}>{l2}</Typography>}
+      {l2&&<Typography sx={{...typography.body3,color:palette.text.secondary,mt:0.75}}>{l2}</Typography>}
       {phase>=3&&<Box sx={{mt:2}}><PromptChips prompts={SUGGESTED_PROMPTS} onPrompt={onPrompt} stacked={stacked}/></Box>}
     </Box>
   );
@@ -480,7 +480,7 @@ function UserBubble({ content, isLatest }) {
   },[isLatest]);
   return (
     <Paper sx={{
-      bgcolor:palette.accent2[50],flex:1,p:"11px 15px",
+      bgcolor:palette.accent2[50],flex:1,py:1.375, px:1.875,
       borderRadius:3,borderBottomRightRadius:0,
       color:palette.text.primary,boxShadow:"none",
       animation: bounce ? "bounceIn 0.8s cubic-bezier(0.0,0.0,0.2,1) both" : "none",
@@ -543,7 +543,7 @@ function ResponseToolbar({ page=1, total=1, compact=false, html='', onRegenerate
 
   return (
     <>
-    <Box sx={{borderTop:`1px solid ${color.divider}`,display:"flex",alignItems:"center",gap:"16px",pt:"4px",width:"100%",mt:"8px"}}>
+    <Box sx={{borderTop:`1px solid ${color.divider}`,display:"flex",alignItems:"center",gap:2,pt:0.5,width:"100%",mt:1}}>
       <Stack direction="row" flex={1} alignItems="center" gap="8px">
         <Box sx={{display:"flex",alignItems:"center"}}>
           <TBtn
@@ -573,7 +573,7 @@ function ResponseToolbar({ page=1, total=1, compact=false, html='', onRegenerate
         <TBtn title="Regenerate response" onClick={onRegenerate}><MuiIcon baseClassName="material-icons-outlined" sx={{fontSize:iconSize, color:palette.text.secondary}}>replay</MuiIcon></TBtn>
         {total > 1 && (
           <>
-            <Box sx={{width:"1px",height:dividerH,bgcolor:color.divider,flexShrink:0,mx:"4px"}}/>
+            <Box sx={{width:"1px",height:dividerH,bgcolor:color.divider,flexShrink:0,mx:0.5}}/>
             <IconButton sx={{width:20,height:20,p:0}} onClick={onPrev} disabled={page<=1}>
               <MuiIcon sx={{fontSize:16,color:palette.text.secondary}}>chevron_left</MuiIcon>
             </IconButton>
@@ -665,7 +665,7 @@ function StepCards({ steps }) {
   },[visible, steps.length]);
 
   return (
-    <Stack direction="column" gap="14px" sx={{mb:"14px"}}>
+    <Stack direction="column" gap="14px" sx={{mb:1.75}}>
       {steps.slice(0,visible).map((step,i)=>{
         const tone = STEP_TONES[step.tone] || STEP_TONES.blue;
         const stepIconName = STEP_ICON[step.icon] || 'bar_chart';
@@ -677,8 +677,8 @@ function StepCards({ steps }) {
               <Box
                 onClick={step.expandable ? ()=>setOpen(o=>({...o,[i]:!o[i]})) : undefined}
                 sx={{
-                  display:"flex",alignItems:"center",gap:"10px",
-                  p:"8px 12px",
+                  display:"flex",alignItems:"center",gap:1.25,
+                  py:1, px:1.5,
                   cursor:step.expandable?"pointer":"default",
                 }}>
                 <Box sx={{
@@ -698,7 +698,7 @@ function StepCards({ steps }) {
                   {step.plans.map((plan,j)=>(
                     <Box key={j} sx={{
                       display:"flex",alignItems:"center",justifyContent:"space-between",
-                      p:"10px 14px",
+                      py:1.25, px:1.75,
                       borderTop:j===0?"none":`1px solid ${color.divider}`,
                       animation:"fadeIn 0.25s ease both",
                     }}>
@@ -706,15 +706,15 @@ function StepCards({ steps }) {
                         <Typography sx={{...typography.h6,color:palette.neutral.black}}>
                           {plan.name}
                         </Typography>
-                        <Typography sx={{...typography.body2,color:palette.text.secondary,mt:"2px"}}>
+                        <Typography sx={{...typography.body2,color:palette.text.secondary,mt:0.25}}>
                           {plan.term} term
                         </Typography>
                       </Box>
-                      <Box sx={{textAlign:"right",flexShrink:0,ml:"12px"}}>
+                      <Box sx={{textAlign:"right",flexShrink:0,ml:1.5}}>
                         <Typography sx={{...typography.h6,color:palette.success[500]}}>
                           {plan.savings}
                         </Typography>
-                        <Typography sx={{...typography.caption,color:palette.text.secondary,mt:"2px"}}>
+                        <Typography sx={{...typography.caption,color:palette.text.secondary,mt:0.25}}>
                           monthly savings
                         </Typography>
                       </Box>
@@ -818,12 +818,12 @@ function WriteAction({ action, detail, items, onConfirm, onDeny, status, flow })
       </Stack>
       {/* Card */}
       <Paper variant="outlined" sx={{borderRadius:2,overflow:"hidden",borderColor,bgcolor:bgColor}}>
-        <Box sx={{p:"10px 12px",borderBottom:`1px solid ${color.divider}`}}>
+        <Box sx={{py:1.25, px:1.5,borderBottom:`1px solid ${color.divider}`}}>
           <Typography sx={{...typography.body1, fontWeight:600, color:palette.neutral.black}}>{action}</Typography>
-          <Typography sx={{...typography.body2, color:palette.text.secondary, mt:"2px"}}>{detail}</Typography>
+          <Typography sx={{...typography.body2, color:palette.text.secondary, mt:0.25}}>{detail}</Typography>
         </Box>
         {items&&items.length>0&&(
-          <Stack direction="column" gap="4px" sx={{p:"8px 12px"}}>
+          <Stack direction="column" gap="4px" sx={{py:1, px:1.5}}>
             {items.map((item,i)=>(
               <Stack key={i} direction="row" alignItems="center" gap={0.75}>
                 <Box sx={{width:3,height:3,borderRadius:"1.5px",bgcolor:palette.text.secondary,flexShrink:0}}/>
@@ -832,7 +832,7 @@ function WriteAction({ action, detail, items, onConfirm, onDeny, status, flow })
             ))}
           </Stack>
         )}
-        <Stack direction="column" gap="8px" sx={{pt:"9px",pb:"12px",px:"12px",borderTop:`1px solid ${color.divider}`}}>
+        <Stack direction="column" gap="8px" sx={{pt:1.125,pb:1.5,px:1.5,borderTop:`1px solid ${color.divider}`}}>
           {!isDone?(
             <>
               <Stack direction="row" gap="4px" justifyContent="flex-end">
@@ -871,9 +871,9 @@ function WriteActionChoice({ action, detail, choices, selected, status, onSelect
       </Stack>
       {/* Card */}
       <Paper variant="outlined" sx={{borderRadius:2,overflow:"hidden",borderColor,bgcolor:bgColor}}>
-        <Box sx={{p:"10px 12px",borderBottom:`1px solid ${color.divider}`}}>
+        <Box sx={{py:1.25, px:1.5,borderBottom:`1px solid ${color.divider}`}}>
           <Typography sx={{...typography.body1, fontWeight:600, color:palette.neutral.black}}>{action}</Typography>
-          <Typography sx={{...typography.body2, color:palette.text.secondary, mt:"2px"}}>{detail}</Typography>
+          <Typography sx={{...typography.body2, color:palette.text.secondary, mt:0.25}}>{detail}</Typography>
         </Box>
         {/* Choice rows */}
         <Stack direction="column" gap={0.75} sx={{p:1}}>
@@ -891,7 +891,7 @@ function WriteActionChoice({ action, detail, choices, selected, status, onSelect
                 disabled={isDone}
                 sx={{
                   display:"flex",alignItems:"center",justifyContent:"space-between",
-                  p:"10px 12px",
+                  py:1.25, px:1.5,
                   borderColor:accentColor,
                   bgcolor:accentBg,
                   borderRadius:`${radius.sm}px`,
@@ -909,18 +909,18 @@ function WriteActionChoice({ action, detail, choices, selected, status, onSelect
                     {picked&&!isDone&&<Box sx={{width:6,height:6,borderRadius:"50%",bgcolor:C_PRIMARY,flexShrink:0}}/>}
                     {picked&&isDone&&status==="confirmed"&&<MuiIcon sx={{fontSize:14, color:palette.success[500]}}>check</MuiIcon>}
                   </Stack>
-                  <Typography sx={{...typography.body2, color:palette.text.secondary, mt:"1px"}}>{c.term} term</Typography>
+                  <Typography sx={{...typography.body2, color:palette.text.secondary, mt:0.125}}>{c.term} term</Typography>
                 </Box>
-                <Box sx={{textAlign:"right",flexShrink:0,ml:"12px"}}>
+                <Box sx={{textAlign:"right",flexShrink:0,ml:1.5}}>
                   <Typography sx={{...typography.body1, fontWeight:600, color:picked&&isDone&&status==="confirmed"?palette.success[500]:palette.neutral.black}}>{c.savings}</Typography>
-                  <Typography sx={{...typography.caption, color:palette.text.secondary, mt:"1px"}}>monthly savings</Typography>
+                  <Typography sx={{...typography.caption, color:palette.text.secondary, mt:0.125}}>monthly savings</Typography>
                 </Box>
               </Paper>
             );
           })}
         </Stack>
         {/* Footer */}
-        <Stack direction="row" gap={1} alignItems="center" sx={{p:"8px 12px",borderTop:`1px solid ${color.divider}`}}>
+        <Stack direction="row" gap={1} alignItems="center" sx={{py:1, px:1.5,borderTop:`1px solid ${color.divider}`}}>
           {!isDone?(
             <>
               <Button
@@ -930,7 +930,7 @@ function WriteActionChoice({ action, detail, choices, selected, status, onSelect
                 onClick={canAct?onConfirm:undefined}
                 disabled={!canAct}
                 startIcon={<MuiIcon sx={{fontSize:"12px !important"}}>check</MuiIcon>}
-                sx={{textTransform:"none",borderRadius:`${radius.sm}px`,py:"6px",px:"14px",opacity:canAct?1:0.35,transition:"opacity 0.15s"}}>
+                sx={{textTransform:"none",borderRadius:`${radius.sm}px`,py:0.75,px:1.75,opacity:canAct?1:0.35,transition:"opacity 0.15s"}}>
                 Confirm
               </Button>
               <Button
@@ -940,10 +940,10 @@ function WriteActionChoice({ action, detail, choices, selected, status, onSelect
                 onClick={canAct?onDeny:undefined}
                 disabled={!canAct}
                 startIcon={<MuiIcon sx={{fontSize:"12px !important"}}>close</MuiIcon>}
-                sx={{textTransform:"none",borderRadius:`${radius.sm}px`,py:"6px",px:"14px",opacity:canAct?1:0.35,transition:"opacity 0.15s"}}>
+                sx={{textTransform:"none",borderRadius:`${radius.sm}px`,py:0.75,px:1.75,opacity:canAct?1:0.35,transition:"opacity 0.15s"}}>
                 Deny
               </Button>
-              <Typography sx={{...typography.caption, color:palette.text.disabled, ml:"4px"}}>
+              <Typography sx={{...typography.caption, color:palette.text.disabled, ml:0.5}}>
                 {selected ? "Apply this plan or deny" : "Select a plan above to continue"}
               </Typography>
             </>
@@ -978,14 +978,14 @@ function WriteActionAutomation({ action, detail, onConfirm, onDeny, status, flow
       </Stack>
       {/* Card */}
       <Paper variant="outlined" sx={{borderRadius:2,overflow:"hidden",borderColor,bgcolor:bgColor}}>
-        <Box sx={{p:"10px 12px",borderBottom:`1px solid ${color.divider}`}}>
+        <Box sx={{py:1.25, px:1.5,borderBottom:`1px solid ${color.divider}`}}>
           <Typography sx={{...typography.body1, fontWeight:600, color:palette.neutral.black}}>{action}</Typography>
-          <Typography sx={{...typography.body2, color:palette.text.secondary, mt:"2px"}}>{detail}</Typography>
+          <Typography sx={{...typography.body2, color:palette.text.secondary, mt:0.25}}>{detail}</Typography>
         </Box>
         {!isDone && (
-          <Box sx={{pt:"24px", pb:"12px", px:"12px", display:"flex", flexDirection:"column", gap:"20px"}}>
+          <Box sx={{pt:3, pb:1.5, px:1.5, display:"flex", flexDirection:"column", gap:2.5}}>
             {/* Two-col: Execution Cadence + Savings Threshold */}
-            <Box sx={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px"}}>
+            <Box sx={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:1.5}}>
               <TextField
                 select
                 label="Execution Cadence"
@@ -1014,13 +1014,13 @@ function WriteActionAutomation({ action, detail, onConfirm, onDeny, status, flow
                 component="button"
                 variant="body2"
                 onClick={()=>setShowMax(v=>!v)}
-                sx={{display:"flex", alignItems:"center", gap:"2px"}}
+                sx={{display:"flex", alignItems:"center", gap:0.25}}
               >
                 <MuiIcon sx={{fontSize:18}}>{showMax ? 'expand_less' : 'expand_more'}</MuiIcon>
                 Add max spend threshold
               </Link>
               <Collapse in={showMax}>
-                <Box sx={{mt:"8px", display:"flex", flexDirection:"column", gap:"20px"}}>
+                <Box sx={{mt:1, display:"flex", flexDirection:"column", gap:2.5}}>
                   <Typography sx={{...typography.body2, fontWeight:500}}>
                     Purchases above this amount will require your approval before executing.
                   </Typography>
@@ -1038,7 +1038,7 @@ function WriteActionAutomation({ action, detail, onConfirm, onDeny, status, flow
             </Box>
           </Box>
         )}
-        <Stack direction="column" gap="8px" sx={{pt:"9px",pb:"12px",px:"12px",borderTop:`1px solid ${color.divider}`}}>
+        <Stack direction="column" gap="8px" sx={{pt:1.125,pb:1.5,px:1.5,borderTop:`1px solid ${color.divider}`}}>
           {!isDone ? (
             <>
               <Stack direction="row" gap="4px" justifyContent="flex-end">
@@ -1230,7 +1230,7 @@ function ChatItem({ title: initialTitle, isPinned=false, onPinToggle, onDelete, 
       onClick={!renaming && !confirmingDelete && !menuOpen ? onSelect : undefined}
       sx={{
         display:"flex", alignItems:"center",
-        px:"8px", py: dense ? 0 : "2px", borderRadius:`${radius.sm}px`, cursor: renaming ? "default" : "pointer",
+        px:1, py: dense ? 0 : "2px", borderRadius:`${radius.sm}px`, cursor: renaming ? "default" : "pointer",
         bgcolor: isActive ? `${palette.uiPrimary[500]}14` : hovered ? "rgba(79,78,85,0.04)" : "transparent",
         transition:"background 0.1s",
       }}
@@ -1249,7 +1249,7 @@ function ChatItem({ title: initialTitle, isPinned=false, onPinToggle, onDelete, 
         </Typography>
       ) : (
         <Stack direction="row" alignItems="flex-start" gap={0.75} sx={{flex:1,minWidth:0}}>
-          {isShared && !isRead && <Box sx={{width:6,height:6,borderRadius:'50%',bgcolor:palette.brandTertiary[500],flexShrink:0,mt:'6px'}}/>}
+          {isShared && !isRead && <Box sx={{width:6,height:6,borderRadius:'50%',bgcolor:palette.brandTertiary[500],flexShrink:0,mt:0.75}}/>}
           <Box sx={{flex:1,minWidth:0}}>
             {!title ? <Skeleton variant="text" width="72%" sx={{fontSize:'0.875rem'}}/> : (
             <Tooltip title={isTruncated ? title : ""} placement="right" enterDelay={600} disableHoverListener={!isTruncated}>
@@ -1268,7 +1268,7 @@ function ChatItem({ title: initialTitle, isPinned=false, onPinToggle, onDelete, 
       )}
 
       {(renaming || confirmingDelete) ? (
-        <Stack direction="row" gap="2px" sx={{flexShrink:0, ml:"auto", pl:"8px"}}>
+        <Stack direction="row" gap="2px" sx={{flexShrink:0, ml:"auto", pl:1}}>
           <IconButton size="small" onClick={renaming ? commitRename : ()=>{ setConfirmingDelete(false); onDelete?.(); }} color={renaming ? "success" : "error"}>
             <MuiIcon sx={{fontSize:16}}>{renaming ? "check" : "delete_outline"}</MuiIcon>
           </IconButton>
@@ -1282,7 +1282,7 @@ function ChatItem({ title: initialTitle, isPinned=false, onPinToggle, onDelete, 
         <IconButton
           size="small"
           onClick={e=>{e.stopPropagation(); setMenuAnchor(e.currentTarget);}}
-          sx={{flexShrink:0, ml:"4px", visibility: hovered||menuOpen ? "visible" : "hidden"}}
+          sx={{flexShrink:0, ml:0.5, visibility: hovered||menuOpen ? "visible" : "hidden"}}
         >
           <MuiIcon sx={{fontSize:16}}>more_vert</MuiIcon>
         </IconButton>
@@ -1513,7 +1513,7 @@ function ShareDialog({ open, config, onClose, onShare }) {
 
         {/* Title input */}
         <Box sx={{mb:2.5}}>
-          <Typography sx={{...typography.body1, fontWeight:500, mb:'6px'}}>
+          <Typography sx={{...typography.body1, fontWeight:500, mb:0.75}}>
             {isConversation ? 'Conversation title' : 'Response title'}
           </Typography>
           <TextField
@@ -1596,7 +1596,7 @@ function ShareDialog({ open, config, onClose, onShare }) {
 // ─── Shared conversation attribution ────────────────────────────────────────
 function SharedByMeta({ title, sharedBy, date }) {
   return (
-    <Box sx={{borderBottom:'1px dashed rgba(0,0,0,0.15)', pb:'4px', pl:'4px', mb:2}}>
+    <Box sx={{borderBottom:'1px dashed rgba(0,0,0,0.15)', pb:0.5, pl:0.5, mb:2}}>
       <Typography sx={{...typography.h6, color:palette.text.primary}}>{title}</Typography>
       <Typography sx={{...typography.body2, color:palette.text.secondary}}>Shared by {sharedBy} · {date}</Typography>
     </Box>
@@ -1612,15 +1612,15 @@ function ChatMenu({ onNewChat, sidebar=false, onSelectChat, showNewChat=true, de
       width: { xs: 260, lg: 320 }, flexShrink:0,
       bgcolor:palette.neutral[50],
       display:"flex",flexDirection:"column",gap: dense ? "8px" : "24px",
-      pt:"16px", pb:"8px", px:"16px",
+      pt:2, pb:1, px:2,
       overflow:"hidden",
       borderRight:`1px solid ${color.divider}`,
     } : {
       position:"absolute",top:8,left:8,right:8,bottom:8,
       bgcolor:palette.surface,
       zIndex:5,
-      display:"flex",flexDirection:"column",gap:"24px",
-      pt:"16px",pb:"8px",px:"16px",
+      display:"flex",flexDirection:"column",gap:3,
+      pt:2,pb:1,px:2,
       overflow:"hidden",
       animation:"fadeIn 0.15s ease",
       borderRadius:1,
@@ -1632,7 +1632,7 @@ function ChatMenu({ onNewChat, sidebar=false, onSelectChat, showNewChat=true, de
         <IconButton size="small" onClick={onClose} sx={{mr:"-6px"}}><MuiIcon sx={{fontSize:18}}>close</MuiIcon></IconButton>
       </Box>}
       {/* New Chat */}
-      {sidebar&&showNewChat&&<ButtonBase onClick={onNewChat} sx={{display:"flex",alignItems:"center",justifyContent:"flex-start",gap:"8px",borderRadius:1,"&:hover":{opacity:0.75}}}>
+      {sidebar&&showNewChat&&<ButtonBase onClick={onNewChat} sx={{display:"flex",alignItems:"center",justifyContent:"flex-start",gap:1,borderRadius:1,"&:hover":{opacity:0.75}}}>
         <svg width="25" height="25" viewBox="0 0 28 28" fill="none" style={{flexShrink:0}}>
           <path d="M25.6549 4.66665C25.6549 3.38331 24.6166 2.33331 23.3333 2.33331H4.66659C3.38325 2.33331 2.33325 3.38331 2.33325 4.66665V18.6666C2.33325 19.95 3.38325 21 4.66659 21H20.9999L25.6666 25.6666L25.6549 4.66665ZM19.8333 12.8333H15.1666V17.5H12.8333V12.8333H8.16659V10.5H12.8333V5.83331H15.1666V10.5H19.8333V12.8333Z" fill={C_TERTIARY}/>
         </svg>
@@ -1643,8 +1643,8 @@ function ChatMenu({ onNewChat, sidebar=false, onSelectChat, showNewChat=true, de
       <Box sx={{flex:1,display:"flex",flexDirection:"column",overflowY:"auto",minHeight:0,gap:0,'&::-webkit-scrollbar':{display:'none'},scrollbarWidth:'none'}}>
         {/* Pinned */}
         {pinned.length > 0 && <>
-          <Box sx={{mb:"12px"}}>
-            <Box sx={{display:"flex",alignItems:"center",gap:"8px",mb:"6px",px:"8px",color:palette.text.secondary}}>
+          <Box sx={{mb:1.5}}>
+            <Box sx={{display:"flex",alignItems:"center",gap:1,mb:0.75,px:1,color:palette.text.secondary}}>
               <MuiIcon baseClassName="material-icons-outlined" sx={{fontSize:"inherit",color:"inherit",flexShrink:0}}>push_pin</MuiIcon>
               <Typography sx={{...typography.overline,color:palette.text.secondary,whiteSpace:"nowrap"}}>Pinned Conversations</Typography>
             </Box>
@@ -1652,11 +1652,11 @@ function ChatMenu({ onNewChat, sidebar=false, onSelectChat, showNewChat=true, de
               <ChatItem key={item.id} title={item.title} isPinned onPinToggle={()=>unpin(item)} onDelete={()=>deleteItem(item)} onSelect={()=>onSelectChat?.(item)} onShare={()=>onShare?.({isConversation:true, title:item.title})} onRename={t=>onRename?.(item.id,t)} dense={dense} isActive={activeChatId===item.id} />
             ))}
           </Box>
-          <Divider sx={{mt:"16px",mb:"16px"}}/>
+          <Divider sx={{mt:2,mb:2}}/>
         </>}
         {/* All conversations — received shares float to top */}
         <Box>
-          <Box sx={{display:"flex",alignItems:"center",gap:"8px",mb:"6px",px:"8px",color:palette.text.secondary}}>
+          <Box sx={{display:"flex",alignItems:"center",gap:1,mb:0.75,px:1,color:palette.text.secondary}}>
             <MuiIcon baseClassName="material-icons-outlined" sx={{fontSize:"inherit",color:"inherit",flexShrink:0}}>chat</MuiIcon>
             <Typography sx={{...typography.overline,color:palette.text.secondary,whiteSpace:"nowrap"}}>All Conversations</Typography>
           </Box>
@@ -1674,7 +1674,7 @@ function ChatMenu({ onNewChat, sidebar=false, onSelectChat, showNewChat=true, de
       </Box>
 
       {/* Footer */}
-      <Box sx={{borderTop:`1px solid ${color.divider}`,pt:"8px",display:"flex",alignItems:"center",gap:"8px",flexShrink:0}}>
+      <Box sx={{borderTop:`1px solid ${color.divider}`,pt:1,display:"flex",alignItems:"center",gap:1,flexShrink:0}}>
         <Box sx={{width:28,height:28,borderRadius:"50%",flexShrink:0,border:`2px solid ${palette.uiPrimary[500]}`,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
           <MuiIcon sx={{fontSize:20,color:palette.uiPrimary[500]}}>support_agent</MuiIcon>
         </Box>
@@ -1698,7 +1698,7 @@ function PagePlaceholder({ panelOpen }) {
         <Skeleton variant="rounded" width={120} height={32} sx={{flexShrink:0}}/>
       </Stack>
       <Paper variant="outlined" sx={{borderRadius:2, overflow:'hidden'}}>
-        <Box sx={{display:'flex', p:'12px 16px', borderBottom:1, borderColor:'divider', gap:3}}>
+        <Box sx={{display:'flex', py:1.5, px:2, borderBottom:1, borderColor:'divider', gap:3}}>
           {[160,100,90,90,80,80].map((w,i)=>(
             <Skeleton key={i} variant="rounded" width={w} height={10} sx={{flexShrink:0}}/>
           ))}
@@ -2263,7 +2263,7 @@ export default function App() {
 
       {/* Overlay drag handle — top-left dots grid */}
       {panelMode==='overlay' && (
-        <Box data-no-drag={false} sx={{position:'absolute',top:'50%',left:6,transform:'translateY(-50%)',display:'grid',gridTemplateColumns:'repeat(2,4px)',gap:'3px',pointerEvents:'none'}}>
+        <Box data-no-drag={false} sx={{position:'absolute',top:'50%',left:6,transform:'translateY(-50%)',display:'grid',gridTemplateColumns:'repeat(2,4px)',gap:0.375,pointerEvents:'none'}}>
           {[...Array(6)].map((_,i)=><Box key={i} sx={{width:4,height:4,borderRadius:'50%',bgcolor:palette.neutral[200]}}/>)}
         </Box>
       )}
@@ -2382,7 +2382,7 @@ export default function App() {
         padding:"24px 16px 16px",
       }}>
         <Container disableGutters maxWidth={panelMode==='fullscreen'||panelMode==='bottom'?'md':false}>
-        <Paper variant="outlined" sx={{borderRadius:6,p:"12px 14px",display:"flex",gap:"10px",alignItems:"center"}}>
+        <Paper variant="outlined" sx={{borderRadius:6,py:1.5, px:1.75,display:"flex",gap:1.25,alignItems:"center"}}>
           <IconButton size="small" sx={{flexShrink:0,p:0}}>
             <MuiIcon baseClassName="material-icons-outlined" sx={{fontSize:18,color:palette.text.secondary}}>attach_file</MuiIcon>
           </IconButton>
@@ -2480,15 +2480,15 @@ export default function App() {
           <Fade in={showFabBubble} unmountOnExit timeout={{enter:700,exit:250}}>
             <Box sx={{position:'absolute',bottom:120,right:32,zIndex:10,maxWidth:240}}>
               <Paper elevation={6} sx={{borderRadius:3,borderBottomRightRadius:0,bgcolor:palette.header,position:'relative'}}>
-                <IconButton size="small" onClick={()=>setShowFabBubble(false)} sx={{position:'absolute',top:6,right:6,p:'2px','&:hover':{bgcolor:alpha(palette.neutral.white,0.1)}}}>
+                <IconButton size="small" onClick={()=>setShowFabBubble(false)} sx={{position:'absolute',top:6,right:6,p:0.25,'&:hover':{bgcolor:alpha(palette.neutral.white,0.1)}}}>
                   <MuiIcon sx={{fontSize:14,color:alpha(palette.neutral.white,0.5)}}>close</MuiIcon>
                 </IconButton>
                 <Box sx={{p:'14px 16px 12px'}}>
-                  <Stack direction="row" alignItems="center" gap={1} sx={{mb:'10px'}}>
+                  <Stack direction="row" alignItems="center" gap={1} sx={{mb:1.25}}>
                     <ArcheraLogo size={14} tint={alpha(palette.neutral.white,0.55)}/>
                     <Typography sx={{...typography.micro,color:alpha(palette.neutral.white,0.55)}}>ARCHERA AI</Typography>
                   </Stack>
-                  <Typography sx={{...typography.body2,color:palette.neutral.white,mb:'10px',lineHeight:'1.5'}}>
+                  <Typography sx={{...typography.body2,color:palette.neutral.white,mb:1.25,lineHeight:'1.5'}}>
                     Ask me anything about your <Box component="span" sx={{color:palette.accent1[300],fontWeight:500}}>{PAGE_NAME}</Box>.
                   </Typography>
                   <Box
@@ -2499,7 +2499,7 @@ export default function App() {
                       setMsgs([]); setActiveShareId(null); setActiveChatId(null);
                       sendPrompt(SUGGESTED_PROMPTS[0]);
                     }}
-                    sx={{display:'inline-flex',alignItems:'flex-start',gap:'6px',px:'10px',py:'6px',borderRadius:3,border:`1px solid ${alpha(palette.neutral.white,0.25)}`,bgcolor:alpha(palette.neutral.white,0.1),cursor:'pointer','&:hover':{bgcolor:alpha(palette.neutral.white,0.18)}}}
+                    sx={{display:'inline-flex',alignItems:'flex-start',gap:0.75,px:1.25,py:0.75,borderRadius:3,border:`1px solid ${alpha(palette.neutral.white,0.25)}`,bgcolor:alpha(palette.neutral.white,0.1),cursor:'pointer','&:hover':{bgcolor:alpha(palette.neutral.white,0.18)}}}
                   >
                     <Typography sx={{...typography.body2,color:alpha(palette.neutral.white,0.9),lineHeight:1.5}}>{SUGGESTED_PROMPTS[0]}</Typography>
                   </Box>
@@ -2552,7 +2552,7 @@ export default function App() {
 
             {/* Variant switcher */}
             <ToggleButtonGroup size="small" value={fabVariant} exclusive onChange={(_,v)=>v&&setFabVariant(v)}
-              sx={{'& .MuiToggleButton-root':{px:'10px',py:'2px',border:'none',color:palette.text.disabled,'&.Mui-selected':{bgcolor:'transparent',color:palette.text.secondary}},'& .MuiToggleButtonGroup-grouped':{borderRadius:'4px !important',border:'none !important'}}}>
+              sx={{'& .MuiToggleButton-root':{px:1.25,py:0.25,border:'none',color:palette.text.disabled,'&.Mui-selected':{bgcolor:'transparent',color:palette.text.secondary}},'& .MuiToggleButtonGroup-grouped':{borderRadius:'4px !important',border:'none !important'}}}>
               <ToggleButton value="a"><Typography sx={{...typography.micro}}>A</Typography></ToggleButton>
               <ToggleButton value="b"><Typography sx={{...typography.micro}}>B</Typography></ToggleButton>
               <ToggleButton value="c"><Typography sx={{...typography.micro}}>C</Typography></ToggleButton>
@@ -2587,7 +2587,7 @@ export default function App() {
               display:'flex',flexDirection:'column',alignItems:'center',pt:2,pb:1,
               cursor:'pointer','&:hover':{bgcolor:palette.neutral[50]},transition:'background 0.15s'}}>
             <Tooltip title="Open Archera AI" placement="left" arrow>
-              <Box sx={{p:"6px",borderRadius:1,display:'flex',alignItems:'center',justifyContent:'center',
+              <Box sx={{p:0.75,borderRadius:1,display:'flex',alignItems:'center',justifyContent:'center',
                 '&:hover':{bgcolor:palette.neutral[100]},transition:'background 0.15s'}}>
                 <ArcheraLogo size={20}/>
               </Box>
