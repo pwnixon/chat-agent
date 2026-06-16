@@ -1,6 +1,4 @@
-import { useState } from "react";
-import palette from '@archera/design-system/palettes/archera-palette';
-import { color, typography } from '@archera/design-system/tokens';
+import { Box, Card, CardActionArea, CardContent, Chip, Stack, Typography } from '@mui/material';
 import { AppHeader } from '@archera/design-system/AppShell';
 
 // ─── Edit this to add / remove demos ─────────────────────────────────────────
@@ -41,78 +39,41 @@ const DEMOS = [
 ];
 // ─────────────────────────────────────────────────────────────────────────────
 
-function Card({ title, desc, version, status, onClick }) {
-  const [hovered, setHovered] = useState(false);
+function DemoCard({ title, desc, version, status, onClick }) {
   return (
-    <div
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: palette.surface,
-        border: `1px solid ${hovered ? palette.brandPrimary[500] : palette.neutral[200]}`,
-        borderRadius: 10,
-        padding: "18px 20px",
-        cursor: "pointer",
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        transition: "border-color 0.15s, box-shadow 0.15s",
-        boxShadow: hovered ? `0 2px 12px ${palette.brandPrimary[500]}1a` : "none",
-      }}
-    >
-      <div style={{ display: "flex", gap: 6 }}>
-        <span style={{
-          ...typography.caption, fontWeight: 600, letterSpacing: "0.05em",
-          padding: "2px 7px", borderRadius: 4,
-          background: `${palette.neutral.black}0f`, color: palette.text.disabled,
-        }}>{version}</span>
-        <span style={{
-          ...typography.caption, fontWeight: 600, letterSpacing: "0.05em",
-          padding: "2px 7px", borderRadius: 4,
-          background: status === "live" ? `${palette.success[500]}1a` : `${palette.accent1[700]}1a`,
-          color: status === "live" ? palette.success[500] : palette.accent1[700],
-        }}>{status === "live" ? "Live" : "WIP"}</span>
-      </div>
-      <div style={{ ...typography.h6, fontWeight: 600, color: palette.neutral.black, lineHeight: 1.3 }}>
-        {title}
-      </div>
-      <div style={{ ...typography.body1, color: palette.text.secondary, lineHeight: 1.5, flex: 1 }}>
-        {desc}
-      </div>
-      <div style={{
-        display: "flex", justifyContent: "flex-end",
-        paddingTop: 8, borderTop: `1px solid ${color.divider}`,
-        ...typography.body2, fontWeight: 500,
-        color: hovered ? palette.brandPrimary[700] : palette.brandPrimary[500],
-        transition: "color 0.15s",
-      }}>
-        Open ›
-      </div>
-    </div>
+    <Card variant="outlined" sx={{ height: '100%' }}>
+      <CardActionArea onClick={onClick} sx={{ height: '100%', alignItems: 'stretch' }}>
+        <CardContent>
+          <Stack spacing={1.25}>
+            <Stack direction="row" spacing={0.75}>
+              <Chip size="small" variant="outlined" label={version} />
+              <Chip
+                size="small"
+                color={status === 'live' ? 'success' : 'warning'}
+                label={status === 'live' ? 'Live' : 'WIP'}
+              />
+            </Stack>
+            <Typography variant="h6">{title}</Typography>
+            <Typography variant="body2" color="text.secondary">{desc}</Typography>
+          </Stack>
+        </CardContent>
+      </CardActionArea>
+    </Card>
   );
 }
 
 export default function DemoIndex() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: palette.background }}>
-      {/* Standard Archera header — logo, "Prototypes" title, no breadcrumb */}
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppHeader pageName="Prototypes" />
-
-      {/* Content */}
-      <main style={{ maxWidth: 960, margin: "0 auto", padding: "48px 40px 80px", width: "100%" }}>
-        <div style={{ marginBottom: 36 }}>
-          <h1 style={{ ...typography.h3, fontWeight: 600, color: palette.neutral.black, marginBottom: 8 }}>
-            {PROJECT.name}
-          </h1>
-          <p style={{ ...typography.body1, color: palette.text.secondary, lineHeight: 1.6, maxWidth: 560 }}>
-            {PROJECT.desc}
-          </p>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
-          {DEMOS.map(d => (
-            <Card
+      <Box component="main" sx={{ width: '100%', maxWidth: 960, mx: 'auto', px: 5, pt: 6, pb: 10 }}>
+        <Box sx={{ mb: 4.5 }}>
+          <Typography variant="h2" gutterBottom>{PROJECT.name}</Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 560 }}>{PROJECT.desc}</Typography>
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 1.75 }}>
+          {DEMOS.map((d) => (
+            <DemoCard
               key={d.demo}
               title={d.title}
               desc={d.desc}
@@ -121,8 +82,8 @@ export default function DemoIndex() {
               onClick={() => { window.location.href = `?demo=${d.demo}`; }}
             />
           ))}
-        </div>
-      </main>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }
