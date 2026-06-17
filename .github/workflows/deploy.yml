@@ -20,12 +20,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Clone design system
+        run: git clone https://github.com/pwnixon/design-system.git ../design-system
+
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
 
-      # @archera/design-system is pulled by npm ci (git dependency in package.json)
       - run: npm ci
 
       - run: npm run build
