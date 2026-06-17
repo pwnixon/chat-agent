@@ -1,15 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
+import { existsSync } from 'fs'
+
+// When ../design-system/ exists locally, alias the package to source so edits
+// hot-reload immediately without npm install. No-op in CI (directory absent).
+const localDS = path.resolve(__dirname, '../design-system')
+const hasLocal = existsSync(localDS)
 
 export default defineConfig({
   base: process.env.BASE_URL ?? '/',
   plugins: [react()],
-  // Local dev convenience: when @archera/design-system is npm-linked
-  // (scripts/link-design-system.sh), edits in the local design-system/ hot-reload
-  // here. dedupe forces a single React/MUI instance (the linked package has its own
-  // node_modules), fs.allow serves the sibling dir, and excluding it from
-  // optimizeDeps keeps edits live. All no-ops for the normal installed package / CI.
   resolve: {
+    ...(hasLocal && { alias: { '@archera/design-system': localDS } }),
     dedupe: ['react', 'react-dom', '@mui/material', '@mui/system', '@mui/private-theming', '@emotion/react', '@emotion/styled'],
   },
   optimizeDeps: { exclude: ['@archera/design-system'] },
