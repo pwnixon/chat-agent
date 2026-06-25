@@ -2257,6 +2257,8 @@ export default function App() {
     <Box
       onMouseDown={panelMode==='overlay' ? startOverlayDrag : undefined}
       sx={{flexShrink:0,p:1,pl:2,display:"flex",alignItems:"center",position:"relative",
+        order:panelMode==='bottom'?2:0,
+        ...(panelMode==='bottom'&&{borderTop:`1px solid ${color.divider}`}),
         cursor:panelMode==='overlay'?"grab":"default",
         '&:active':{cursor:panelMode==='overlay'?"grabbing":"default"}}}
     >
@@ -2306,15 +2308,15 @@ export default function App() {
           else if(val) setPanelMode(val);
         }}/>
       </Stack>
-      {/* Animated gradient bottom border */}
-      <div style={{
+      {/* Animated gradient bottom border — bottom-dock toolbar uses a plain top divider instead (gradient lives on the top bar) */}
+      {panelMode!=='bottom' && <div style={{
         position:"absolute",bottom:0,left:0,right:0,height:2,opacity:0.50,
         background:`linear-gradient(90deg,${C_PRIMARY},${C_TERTIARY},${C_PRIMARY},${C_SECONDARY},${C_PRIMARY})`,
         backgroundSize:"300% 100%",animation:"gradientShift 8s linear infinite",
-      }}/>
+      }}/>}
     </Box>
     {/* Body */}
-    <Box sx={{flex:1,display:"flex",flexDirection:(panelMode==='fullscreen'||panelMode==='bottom')?"row":"column",overflow:"hidden",position:"relative"}}>
+    <Box sx={{flex:1,order:panelMode==='bottom'?1:0,display:"flex",flexDirection:(panelMode==='fullscreen'||panelMode==='bottom')?"row":"column",overflow:"hidden",position:"relative"}}>
       {panelMode==='fullscreen'&&<ChatMenu sidebar onNewChat={()=>newChat()} onSelectChat={selectChat} receivedShares={receivedShares} onMarkRead={markShareRead} onSelectShared={selectReceivedShare} onShare={cfg=>setShareDialog({...cfg,isConversation:true})} activeChatId={activeChatId} activeShareId={activeShareId} pinned={pinned} all={all} onPin={pinConvo} onUnpin={unpinConvo} onDelete={deleteConvo} onRename={renameConvo}/>}
       {panelMode==='bottom'&&<ChatMenu sidebar dense showNewChat={false} onNewChat={()=>newChat()} onSelectChat={selectChat} receivedShares={receivedShares} onMarkRead={markShareRead} onSelectShared={selectReceivedShare} onShare={cfg=>setShareDialog({...cfg,isConversation:true})} activeChatId={activeChatId} activeShareId={activeShareId} pinned={pinned} all={all} onPin={pinConvo} onUnpin={unpinConvo} onDelete={deleteConvo} onRename={renameConvo}/>}
       <Box sx={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
@@ -2663,13 +2665,20 @@ export default function App() {
         }}
         >
           {chatPanel}
-          {/* Bottom dock resize handle — horizontal pill at top */}
+          {/* Bottom dock resize handle — thin bar pinned to the top of the dock */}
           {panelMode==='bottom' && (
             <Tooltip title="Click to collapse · Drag to resize" placement="top" arrow>
               <div onMouseDown={startBottomDockResize}
-                style={{position:'absolute',top:0,left:0,right:0,height:10,cursor:'n-resize',zIndex:5,
+                style={{order:0,flexShrink:0,height:12,paddingBottom:2,boxSizing:'border-box',cursor:'n-resize',position:'relative',
+                  borderTop:`1px solid ${color.divider}`,
                   display:'flex',alignItems:'center',justifyContent:'center'}}>
                 <div style={{width:40,height:4,borderRadius:2,background:palette.neutral[300]}}/>
+                {/* Animated gradient border at the bottom of the top bar */}
+                <div style={{
+                  position:'absolute',bottom:0,left:0,right:0,height:2,opacity:0.50,
+                  background:`linear-gradient(90deg,${C_PRIMARY},${C_TERTIARY},${C_PRIMARY},${C_SECONDARY},${C_PRIMARY})`,
+                  backgroundSize:"300% 100%",animation:"gradientShift 8s linear infinite",
+                }}/>
               </div>
             </Tooltip>
           )}
