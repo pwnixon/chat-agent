@@ -1,13 +1,17 @@
 {
-  "name": "chat-agent",
-  "private": true,
+  "name": "@archera/chat-agent",
   "type": "module",
+  "exports": {
+    ".": "./index.jsx",
+    "./ArcheraArchitect.jsx": "./ArcheraArchitect.jsx",
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "dev": "vite --open",
     "build": "vite build",
     "audit": "ds-audit"
   },
-  "dependencies": {
+  "peerDependencies": {
     "@archera/design-system": "github:pwnixon/design-system#main",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",

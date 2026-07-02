@@ -455,9 +455,11 @@ function NewChatView({ onPrompt, options, greeting='How can I help?', stacked=fa
 }
 
 // ─── Welcome typewriter ───────────────────────────────────────────────────────
-function Welcome({ onPrompt, stacked=false }) {
+const WELCOME_INTRO = "Your Commitment Inventory tracks all your active reservations, coverage rates, upcoming expirations, monthly and amortized costs, and total savings — all in one place.";
+
+function Welcome({ onPrompt, stacked=false, pageName=PAGE_NAME, intro=WELCOME_INTRO, prompts=SUGGESTED_PROMPTS }) {
   const [l1,setL1]=useState(""), [l2,setL2]=useState(""), [phase,setPhase]=useState(1);
-  const f1=PAGE_NAME, f2="Your Commitment Inventory tracks all your active reservations, coverage rates, upcoming expirations, monthly and amortized costs, and total savings — all in one place.";
+  const f1=pageName, f2=intro;
 
   useEffect(()=>{let i=0,c=false;function t(){if(c)return;if(i<f1.length){i++;setL1(f1.slice(0,i));setTimeout(t,8+Math.random()*6);}else setPhase(2);}setTimeout(t,100);return()=>{c=true;};},[]);
   useEffect(()=>{if(phase!==2)return;let i=0,c=false;function t(){if(c)return;if(i<f2.length){i++;setL2(f2.slice(0,i));if(i===f2.length)setPhase(3);else setTimeout(t,6+Math.random()*4);}}setTimeout(t,80);return()=>{c=true;};},[phase]);
@@ -466,7 +468,7 @@ function Welcome({ onPrompt, stacked=false }) {
     <Box sx={{width:'100%', minWidth:0}}>
       <Typography sx={{...typography.h4,color:palette.text.primary}}>{l1}</Typography>
       {l2&&<Typography sx={{...typography.body3,color:palette.text.secondary,mt:0.75}}>{l2}</Typography>}
-      {phase>=3&&<Box sx={{mt:2}}><PromptChips prompts={SUGGESTED_PROMPTS} onPrompt={onPrompt} stacked={stacked}/></Box>}
+      {phase>=3&&<Box sx={{mt:2}}><PromptChips prompts={prompts} onPrompt={onPrompt} stacked={stacked}/></Box>}
     </Box>
   );
 }
@@ -566,7 +568,7 @@ function ResponseToolbar({ page=1, total=1, compact=false, html='', onRegenerate
           <TBtn title={copied ? "Copied!" : "Copy"} onClick={()=>{ const tmp=document.createElement('div');tmp.innerHTML=html;navigator.clipboard.writeText(tmp.innerText||''); setCopied(true); setTimeout(()=>setCopied(false),2000); }}>
             <MuiIcon {...(!copied && {baseClassName:"material-icons-outlined"})} sx={{fontSize:iconSize, color:copied ? palette.success[500] : palette.text.secondary}}>content_copy</MuiIcon>
           </TBtn>
-          <TBtn title="Share" onClick={onShare}><MuiIcon baseClassName="material-symbols-outlined" sx={{fontSize:iconSize, color:palette.text.secondary}}>share</MuiIcon></TBtn>
+          {onShare && <TBtn title="Share" onClick={onShare}><MuiIcon baseClassName="material-symbols-outlined" sx={{fontSize:iconSize, color:palette.text.secondary}}>share</MuiIcon></TBtn>}
         </Box>
       </Stack>
       <Stack direction="row" alignItems="center" gap={compact?"2px":"4px"} flexShrink={0}>
@@ -736,7 +738,7 @@ function StepCards({ steps }) {
 }
 
 // ─── Response row ─────────────────────────────────────────────────────────────
-function ResponseRow({ html, instant=false, onStreamDone, pageNum, totalPages, onResetDone, expanded, setExpanded, steps, confirm, onConfirmStatus, choice, onChoiceSelect, onChoiceConfirm, onChoiceDeny, onRegenerate, onPrev, onNext, compact=false, reasoning, reasoningExpanded, setReasoningExpanded, thinkingTrace, thinkingExpanded, setThinkingExpanded, followUp, onFollowUp, onShare }) {
+function ResponseRow({ html, instant=false, onStreamDone, pageNum, totalPages, onResetDone, expanded, setExpanded, steps, confirm, onConfirmStatus, choice, onChoiceSelect, onChoiceConfirm, onChoiceDeny, onRegenerate, onPrev, onNext, compact=false, reasoning, reasoningExpanded, setReasoningExpanded, thinkingTrace, thinkingExpanded, setThinkingExpanded, followUp, onFollowUp, onShare, canShare=true, canWriteActions=true }) {
   const [disp,setDisp]=useState(()=>instant?html:"");
   const [iconMode,setIconMode]=useState(()=>instant?"done":"success");
   const [streamDone,setStreamDone]=useState(()=>instant);
@@ -758,7 +760,7 @@ function ResponseRow({ html, instant=false, onStreamDone, pageNum, totalPages, o
       {thinkingTrace?.length>0&&<Box sx={{mb:2}}><ThinkingToggle steps={thinkingTrace} expanded={thinkingExpanded} setExpanded={setThinkingExpanded} instant/></Box>}
       {steps&&<StepCards steps={steps}/>}
       <div className="resp-html" dangerouslySetInnerHTML={{__html:disp+(done?"":"<span style='opacity:.4'>|</span>")}} />
-      {done&&confirm&&(
+      {done&&canWriteActions&&confirm&&(
         <div style={{marginTop:12}}>
           {confirm.type==="automation"
             ? <WriteActionAutomation {...confirm} onConfirm={()=>onConfirmStatus("confirmed")} onDeny={()=>onConfirmStatus("denied")}/>
@@ -766,7 +768,7 @@ function ResponseRow({ html, instant=false, onStreamDone, pageNum, totalPages, o
           }
         </div>
       )}
-      {done&&choice&&(
+      {done&&canWriteActions&&choice&&(
         <div style={{marginTop:12}}>
           <WriteActionChoice {...choice} onSelect={onChoiceSelect} onConfirm={onChoiceConfirm} onDeny={onChoiceDeny}/>
         </div>
@@ -774,7 +776,7 @@ function ResponseRow({ html, instant=false, onStreamDone, pageNum, totalPages, o
       {done&&followUp&&onFollowUp&&<FollowUp text={followUp} onPrompt={onFollowUp}/>}
       {done&&reasoning&&<div style={{marginTop:8}}><ReasoningTrace reasoning={reasoning} expanded={reasoningExpanded} setExpanded={setReasoningExpanded}/></div>}
       {done&&<div style={{marginTop:0}}><SourcesPanel expanded={expanded} setExpanded={setExpanded}/></div>}
-      {done&&<ResponseToolbar page={pageNum} total={totalPages} compact={compact} html={html} onRegenerate={onRegenerate} onPrev={onPrev} onNext={onNext} onShare={onShare}/>}
+      {done&&<ResponseToolbar page={pageNum} total={totalPages} compact={compact} html={html} onRegenerate={onRegenerate} onPrev={onPrev} onNext={onNext} onShare={canShare ? onShare : undefined}/>}
     </div>
   );
   if(compact) return (
@@ -1734,9 +1736,9 @@ const DEV_MSGS = [
 const BP_WIDE = 1440; // auto-open sidebar alongside content
 const BP_MED  = 1280; // FAB opens sidebar above this, overlay below
 
-function getInitialPanelState() {
+function getInitialPanelState(autoOpen = true) {
   const w = window.innerWidth;
-  if (w >= BP_WIDE) return { open: true,  mode: 'sidebar' };
+  if (autoOpen && w >= BP_WIDE) return { open: true,  mode: 'sidebar' };
   return             { open: false, mode: w >= BP_MED ? 'sidebar' : 'overlay' };
 }
 
@@ -1755,13 +1757,26 @@ function PanelModeToggleGroup({ panelMode, onChange, tooltipPlacement='bottom', 
   );
 }
 
-export default function App() {
+export default function App({ embedded = false, content, features, appShell, children, chat = true, autoOpen = false } = {}) {
   const demo = new URLSearchParams(window.location.search).get('demo');
   const dev = demo === 'dev';
-  const INIT_TRACE = INIT_MSGS[1].thinkingTrace||[];
+  // Merged content — consumers override any field via the `content` prop; module consts are the defaults.
+  const C = { pageName: PAGE_NAME, suggestedPrompts: SUGGESTED_PROMPTS, initMsgs: INIT_MSGS, welcomeIntro: WELCOME_INTRO, ...content };
+  // Feature flags — consumers strip in-chat workflows from the embeddable chat. All default true so the standalone demo is unchanged.
+  const F = { writeActions: true, share: true, chatHistory: true, ...features };
+  // Chat on/off + auto-dock behavior: set per-consumer (props) or overridden per-URL.
+  const params = new URLSearchParams(window.location.search);
+  const chatParam = (params.get('chat') || '').toLowerCase();
+  const chatOff = chat === false || chatParam === 'off' || chatParam === '0' || chatParam === 'false';
+  // autoOpen = auto-dock-open on large viewports. Prop default, overridable via ?dock=on|off.
+  const dockParam = (params.get('dock') || '').toLowerCase();
+  const autoDock = ['off','0','false'].includes(dockParam) ? false : ['on','1','true'].includes(dockParam) ? true : autoOpen;
+  const INIT_TRACE = C.initMsgs[1]?.thinkingTrace||[];
   const INIT_TRACE_MS = INIT_TRACE.reduce((t,s)=>t+(s.length/2)*15+300, 0)+2500;
-  const INIT_START = [INIT_MSGS[0], {id:INIT_UID+1, type:"thinking", expanded:false, thinkingTrace:INIT_TRACE}];
-  const [msgs,setMsgs]=useState(demo==='welcome'||demo==='received' ? [] : demo==='savings_analysis' ? INIT_START : DEV_MSGS);
+  const INIT_START = C.initMsgs[0] ? [C.initMsgs[0], {id:INIT_UID+1, type:"thinking", expanded:false, thinkingTrace:INIT_TRACE}] : [];
+  // Consumers that pass content.initMsgs (including embedded/host use) seed from it
+  // (e.g. [] → start on the welcome screen); otherwise fall back to the demo's own seeding.
+  const [msgs,setMsgs]=useState((embedded || content?.initMsgs!==undefined) ? C.initMsgs : (demo==='welcome'||demo==='received' ? [] : demo==='savings_analysis' ? INIT_START : DEV_MSGS));
   useEffect(()=>{
     // received demo: sidebar auto-opens on wide screens; on small screens the FAB badge is enough
     if(demo==='received' && window.innerWidth >= BP_MED){ setPanelOpen(true); }
@@ -1770,7 +1785,7 @@ export default function App() {
     if(demo==='savings_analysis'){
       const t=setTimeout(()=>setMsgs(prev=>{
         // Only fire if still in the initial thinking state
-        if(prev.length===2&&prev[1]?.type==='thinking') return [prev[0], {...INIT_MSGS[1], onResetDone:prev[1].onResetDone}];
+        if(prev.length===2&&prev[1]?.type==='thinking') return [prev[0], {...C.initMsgs[1], onResetDone:prev[1].onResetDone}];
         return prev;
       }), INIT_TRACE_MS);
       return()=>clearTimeout(t);
@@ -1794,11 +1809,11 @@ export default function App() {
   const [activeChatId,setActiveChatId]=useState(null);
   const [snackbar,setSnackbar]=useState(null); // null | string message
   const [notificationDismissed,setNotificationDismissed]=useState(false);
-  const [panelOpen,setPanelOpen]=useState(()=>getInitialPanelState().open);
+  const [panelOpen,setPanelOpen]=useState(()=>embedded ? true : getInitialPanelState(autoDock).open);
   const scrollRef=useRef(null), taRef=useRef(null);
   const [activeId, setActiveId]=useState(null);
   const promptRef=useRef(null);
-  const [panelMode, setPanelMode]=useState(()=>getInitialPanelState().mode);
+  const [panelMode, setPanelMode]=useState(()=>embedded ? 'sidebar' : getInitialPanelState(autoDock).mode);
   const [showFabBubble, setShowFabBubble]=useState(false);
   const fabBubbleFired=useRef(false);
   const [fabVariant, setFabVariant]=useState('a');
@@ -1906,13 +1921,13 @@ export default function App() {
   useEffect(()=>{
     function onResize(){
       const w = window.innerWidth;
-      if(w >= BP_WIDE && !panelOpen){
+      if(w >= BP_WIDE && !panelOpen && autoDock){
         setPanelOpen(true); setPanelMode('sidebar');
       }
     }
     window.addEventListener('resize', onResize);
     return()=>window.removeEventListener('resize', onResize);
-  },[panelOpen]);
+  },[panelOpen, autoDock]);
 
   function newChat(){
     setMsgs([]);setBusy(false);setInput("");setActiveId(null);setShowWaiting(false);setActiveShareId(null);setActiveChatId(null);
@@ -1946,7 +1961,7 @@ export default function App() {
   function openNotificationMenu(){
     setNotificationDismissed(true);
     if(!panelOpen) openPanel();
-    setTimeout(()=>setShowMenu(true), panelOpen?0:300);
+    if(F.chatHistory) setTimeout(()=>setShowMenu(true), panelOpen?0:300);
   }
   function addWaiting(){setTimeout(()=>setShowWaiting(true),400);}
   // Wire onResetDone for pre-seeded initial message
@@ -2249,185 +2264,11 @@ export default function App() {
   const responseCompact = panelMode === 'sidebar' || panelMode === 'overlay';
   const panelVisible = panelOpen && panelMode !== 'rail';
   const unreadShareCount = receivedShares.filter(s=>!s.read).length;
-  const notificationVisible = unreadShareCount > 0 && !notificationDismissed;
+  const notificationVisible = F.share && unreadShareCount > 0 && !notificationDismissed;
   const isSidebarOpen = panelOpen && panelMode === 'sidebar';
   function openPanel(){ window.innerWidth>=BP_MED ? openSidebar() : (setPanelMode('overlay'), setPanelOpen(true)); }
-  const chatPanel = (<>
-    {/* Chat header — default: 48px (sidebar/overlay), fullwidth: 64px (fullscreen) */}
-    <Box
-      onMouseDown={panelMode==='overlay' ? startOverlayDrag : undefined}
-      sx={{flexShrink:0,p:1,pl:2,display:"flex",alignItems:"center",position:"relative",
-        order:panelMode==='bottom'?2:0,
-        ...(panelMode==='bottom'&&{borderTop:`1px solid ${color.divider}`}),
-        cursor:panelMode==='overlay'?"grab":"default",
-        '&:active':{cursor:panelMode==='overlay'?"grabbing":"default"}}}
-    >
-
-      {/* Overlay drag handle — top-left dots grid */}
-      {panelMode==='overlay' && (
-        <Box data-no-drag={false} sx={{position:'absolute',top:'50%',left:6,transform:'translateY(-50%)',display:'grid',gridTemplateColumns:'repeat(2,4px)',gap:0.375,pointerEvents:'none'}}>
-          {[...Array(6)].map((_,i)=><Box key={i} sx={{width:4,height:4,borderRadius:'50%',bgcolor:palette.neutral[200]}}/>)}
-        </Box>
-      )}
-      {/* Left */}
-      <Stack direction="row" alignItems="center" gap="16px" sx={{flex:"1 0 0",minWidth:0}}>
-        {panelMode==='fullscreen' ? (
-          <Stack direction="row" alignItems="center" gap="8px" sx={{flexShrink:0}}>
-            <ArcheraLogo size={20} tint={palette.text.secondary}/>
-            <Typography sx={{...typography.h4,color:palette.text.secondary,whiteSpace:"nowrap"}}>Archera AI</Typography>
-          </Stack>
-        ) : (
-          <>
-            <Badge badgeContent={unreadShareCount} invisible={!notificationVisible} onClick={()=>{ setShowMenu(true); setNotificationDismissed(true); }} sx={{cursor:notificationVisible?'pointer':'default','& .MuiBadge-badge':{bgcolor:palette.brandTertiary[500],color:palette.neutral.white,transition:'opacity 0.3s ease',top:4,right:-12}}}>
-                <ArcheraLogo size={28} tint={palette.neutral[400]} sx={{flexShrink:0}}/>
-              </Badge>
-          </>
-        )}
-      </Stack>
-      {/* Right: action icons + ToggleButtonGroup */}
-      <Stack data-no-drag direction="row" alignItems="center" gap={1.5} sx={{flexShrink:0}}>
-        {compact && <>
-          <IconButton sx={{width:28,height:28,p:0,flexShrink:0}} title="New chat" onClick={newChat}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M21.99 4C21.99 2.9 21.1 2 20 2H4C2.9 2 2 2.9 2 4V16C2 17.1 2.9 18 4 18H18L22 22L21.99 4ZM17 11H13V15H11V11H7V9H11V5H13V9H17V11Z" fill={C_TERTIARY}/>
-            </svg>
-          </IconButton>
-          {panelMode!=='bottom' && <>
-            <IconButton sx={{width:28,height:28,p:0,flexShrink:0}} title="Chat history" onClick={()=>{ setShowMenu(o=>!o); setNotificationDismissed(true); }}>
-              <MuiIcon sx={{fontSize:24,color:showMenu?palette.text.primary:palette.text.secondary}}>view_list</MuiIcon>
-            </IconButton>
-            <Box sx={{width:"1px",bgcolor:color.divider,alignSelf:"stretch",flexShrink:0}}/>
-          </>}
-        </>}
-        <PanelModeToggleGroup panelMode={panelMode} onChange={val=>{
-          if(val==='close'){
-            if(panelMode==='bottom') closeToRail();
-            else if(window.innerWidth>=BP_WIDE) setPanelMode('rail');
-            else closeSidebar();
-          } else if(val==='bottom') openBottom();
-          else if(val) setPanelMode(val);
-        }}/>
-      </Stack>
-      {/* Animated gradient bottom border — bottom-dock toolbar uses a plain top divider instead (gradient lives on the top bar) */}
-      {panelMode!=='bottom' && <div style={{
-        position:"absolute",bottom:0,left:0,right:0,height:2,opacity:0.50,
-        background:`linear-gradient(90deg,${C_PRIMARY},${C_TERTIARY},${C_PRIMARY},${C_SECONDARY},${C_PRIMARY})`,
-        backgroundSize:"300% 100%",animation:"gradientShift 8s linear infinite",
-      }}/>}
-    </Box>
-    {/* Body */}
-    <Box sx={{flex:1,order:panelMode==='bottom'?1:0,display:"flex",flexDirection:(panelMode==='fullscreen'||panelMode==='bottom')?"row":"column",overflow:"hidden",position:"relative"}}>
-      {panelMode==='fullscreen'&&<ChatMenu sidebar onNewChat={()=>newChat()} onSelectChat={selectChat} receivedShares={receivedShares} onMarkRead={markShareRead} onSelectShared={selectReceivedShare} onShare={cfg=>setShareDialog({...cfg,isConversation:true})} activeChatId={activeChatId} activeShareId={activeShareId} pinned={pinned} all={all} onPin={pinConvo} onUnpin={unpinConvo} onDelete={deleteConvo} onRename={renameConvo}/>}
-      {panelMode==='bottom'&&<ChatMenu sidebar dense showNewChat={false} onNewChat={()=>newChat()} onSelectChat={selectChat} receivedShares={receivedShares} onMarkRead={markShareRead} onSelectShared={selectReceivedShare} onShare={cfg=>setShareDialog({...cfg,isConversation:true})} activeChatId={activeChatId} activeShareId={activeShareId} pinned={pinned} all={all} onPin={pinConvo} onUnpin={unpinConvo} onDelete={deleteConvo} onRename={renameConvo}/>}
-      <Box sx={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
-      {showMenu&&panelMode!=='fullscreen'&&<div onClick={()=>setShowMenu(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.2)',zIndex:4,animation:'backdropIn 0.2s ease'}}/>}
-      {showMenu&&panelMode!=='fullscreen'&&<ChatMenu onNewChat={()=>{newChat();setShowMenu(false);}} onSelectChat={selectChat} receivedShares={receivedShares} onMarkRead={markShareRead} onSelectShared={selectReceivedShare} onShare={cfg=>setShareDialog({...cfg,isConversation:true})} onClose={()=>setShowMenu(false)} activeChatId={activeChatId} activeShareId={activeShareId} pinned={pinned} all={all} onPin={pinConvo} onUnpin={unpinConvo} onDelete={deleteConvo} onRename={renameConvo}/>}
-      <Box ref={scrollRef} onScroll={handleScroll} sx={{flex:1,overflowY:"auto",p:"24px 24px 0"}}>
-        <Container disableGutters maxWidth={panelMode==='fullscreen'||panelMode==='bottom'?'md':false}>
-        {msgs.length===0&&(
-          <Box sx={{display:"flex",flexDirection:"column",alignItems:"flex-start",pt:panelMode==='bottom'?2:8,mb:4}}>
-            <Box sx={{width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center",mb:2}}>
-              <Icon mode="breathe"/>
-            </Box>
-            {isNewChat
-              ? <NewChatView onPrompt={sendPrompt} options={newChatOptions} greeting={newChatGreeting} stacked={panelMode==='fullscreen'||panelMode==='bottom'}/>
-              : <Welcome onPrompt={sendPrompt} stacked={panelMode==='fullscreen'||panelMode==='bottom'}/>}
-          </Box>
-        )}
-        <Stack direction="column">
-          {msgs.map(m=>{
-            if(m.type==="shared-divider") return (
-              <Box key={m.id} sx={{animation:'fadeIn 0.4s ease'}}>
-                <SharedByMeta title={m.title} sharedBy={m.sharedBy} date={m.date}/>
-              </Box>
-            );
-            if(m.type==="user") return (
-              <Box key={m.id} ref={m.id===latestUserId?promptRef:null} sx={{display:"flex",justifyContent:"flex-end",pl:"6em",mb:2}}>
-                <UserBubble content={m.content} isLatest={!!m.isFresh}/>
-              </Box>
-            );
-            if(m.type==="thinking") return (
-              <Box key={m.id} sx={{mb:2}}>
-                <Box sx={{display:"flex",gap:2,alignItems:"flex-start",pl:6,position:"relative",minHeight:40}}>
-                  <Box sx={{position:"absolute",left:0,top:0,width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <Icon mode="thinking"/>
-                  </Box>
-                  <Box sx={{flex:1,mt:"0.5rem"}}>
-                    <Phrases active={true} expanded={m.expanded} setExpanded={v=>setExpanded(m.id,v)}/>
-                  </Box>
-                </Box>
-                {m.thinkingTrace&&m.thinkingTrace.length>0&&(
-                  <Box sx={{mt:2}}>
-                    <ThinkingToggle steps={m.thinkingTrace} expanded={m.thinkingExpanded||false} setExpanded={v=>setThinkingExpanded(m.id,v)}/>
-                  </Box>
-                )}
-              </Box>
-            );
-            if(m.type==="response") { const vIdx=m.versionIdx||0; const vLen=(m.versions||[]).length; const pageNum=vIdx+1; const totalPages=Math.max(vLen, vIdx+1); return <ResponseRow key={m.id} html={m.html} instant={m.instant||false} onStreamDone={html=>saveVersion(m.id,html)} pageNum={pageNum} totalPages={totalPages} onResetDone={m.onResetDone} expanded={m.expanded} setExpanded={v=>setExpanded(m.id,v)} steps={m.steps} confirm={m.confirm} onConfirmStatus={s=>setConfirmStatusAndFlow(m.id,s,m.confirm)} choice={m.choice} onChoiceSelect={id=>chooseSelect(m.id,id)} onChoiceConfirm={()=>chooseConfirm(m.id,m.choice)} onChoiceDeny={()=>chooseDeny(m.id)} onRegenerate={()=>regenerateMsg(m.id)} onPrev={()=>navigateVersion(m.id,vIdx-1)} onNext={()=>navigateVersion(m.id,vIdx+1)} compact={responseCompact} reasoning={m.reasoning} reasoningExpanded={m.reasoningExpanded||false} setReasoningExpanded={v=>setReasoningExpanded(m.id,v)} thinkingTrace={m.thinkingTrace} thinkingExpanded={m.thinkingExpanded||false} setThinkingExpanded={v=>setThinkingExpanded(m.id,v)} followUp={m.followUp} onFollowUp={sendPrompt} onShare={()=>setShareDialog({isConversation:false, msgId:m.id, title:generateShareTitle(m.html)})}/>; }
-            return null;
-          })}
-        </Stack>
-        {showWaiting&&(
-          <Box sx={{mb:2,animation:"fadeIn 0.8s ease both"}}>
-            <Box sx={{width:responseCompact?32:40,height:responseCompact?32:40,display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <Icon mode="breathe" size={responseCompact?32:40}/>
-            </Box>
-          </Box>
-        )}
-        <div ref={bottomRef}/>
-        </Container>
-        <Box sx={{height:panelMode==='bottom'?`${panelHeight}px`:"90vh"}}/>
-      </Box>
-      <div style={{
-        position:"absolute",bottom:0,left:0,right:0,
-        background:`linear-gradient(to bottom,${palette.surface}00 0%,${palette.surface} 35%)`,
-        padding:"24px 16px 16px",
-      }}>
-        <Container disableGutters maxWidth={panelMode==='fullscreen'||panelMode==='bottom'?'md':false}>
-        <Paper variant="outlined" sx={{borderRadius:6,py:1.5, px:1.75,display:"flex",gap:1.25,alignItems:"center"}}>
-          <IconButton size="small" sx={{flexShrink:0,p:0}}>
-            <MuiIcon baseClassName="material-icons-outlined" sx={{fontSize:18,color:palette.text.secondary}}>attach_file</MuiIcon>
-          </IconButton>
-          <InputBase
-            multiline
-            maxRows={5}
-            inputRef={taRef}
-            value={input}
-            placeholder="Send a message"
-            autoFocus
-            onKeyDown={onKey}
-            onChange={e=>{setInput(e.target.value);}}
-            sx={{flex:1,fontSize:14,lineHeight:"20px",color:palette.text.primary,p:0}}
-          />
-          <IconButton size="small" onClick={send} disabled={busy||!input.trim()} sx={{flexShrink:0,p:0,opacity:busy||!input.trim()?0.3:1}}>
-            <MuiIcon sx={{fontSize:18,color:palette.uiPrimary[300]}}>send</MuiIcon>
-          </IconButton>
-        </Paper>
-        </Container>
-      </div>
-      </Box>
-    </Box>
-  </>);
-
-  return (<>
-    <Snackbar open={!!snackbar} autoHideDuration={4000} onClose={()=>setSnackbar(null)} anchorOrigin={{vertical:'bottom',horizontal:'center'}}>
-      <Alert onClose={()=>setSnackbar(null)} severity="success" variant="filled" sx={{width:'100%'}}>
-        {snackbar}
-      </Alert>
-    </Snackbar>
-    <ShareDialog open={!!shareDialog} config={shareDialog} onClose={()=>setShareDialog(null)} onShare={({accounts,includeConversation})=>{
-      const what = (shareDialog?.isConversation||includeConversation) ? 'Conversation' : 'Response';
-      const who = accounts==='all' ? 'everyone in your organization' : accounts.length===1 ? '1 person' : `${accounts.length} people`;
-      setSnackbar(`${what} shared with ${who}.`);
-    }}/>
-    <AppShell
-      pageName="Commitment Inventory"
-      provider="AWS"
-      navIcons={[{icon:'list_alt'},{icon:'equalizer',active:true},{icon:'workspaces'}]}
-      contentStyle={{padding:0, position:'relative', overflow:'hidden'}}
-    >
-      <style>{`
-        *{box-sizing:border-box;margin:0;padding:0;}
+  const styleBlock = (<style>{`
+        *{box-sizing:border-box;}
         @keyframes gl{to{transform:rotate(360deg);}}
         @keyframes gc{to{transform:rotate(-360deg);}}
         @keyframes gb{to{transform:rotate(360deg);}}
@@ -2462,18 +2303,219 @@ export default function App() {
         .icon-btn{background:transparent;border:none;cursor:pointer;padding:4px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:${palette.text.secondary};}
         .icon-btn:hover{background:rgba(0,0,0,0.05);}
         ::-webkit-scrollbar{width:3px;}
+        .chat-host-scroll{scrollbar-width:none;-ms-overflow-style:none;}
+        .chat-host-scroll::-webkit-scrollbar{display:none;}
         ::-webkit-scrollbar-thumb{background:${color.divider};border-radius:3px;}
         textarea::placeholder{color:${palette.text.secondary};}
         .resize-handle:hover{background:${palette.brandPrimary[100]}!important;}
-      `}</style>
+      `}</style>);
+  const chatPanel = (<>
+    {/* Chat header — default: 48px (sidebar/overlay), fullwidth: 64px (fullscreen) */}
+    <Box
+      onMouseDown={panelMode==='overlay' ? startOverlayDrag : undefined}
+      sx={{flexShrink:0,p:1,pl:2,display:"flex",alignItems:"center",position:"relative",
+        order:panelMode==='bottom'?2:0,
+        ...(panelMode==='bottom'&&{borderTop:`1px solid ${color.divider}`}),
+        cursor:panelMode==='overlay'?"grab":"default",
+        '&:active':{cursor:panelMode==='overlay'?"grabbing":"default"}}}
+    >
+
+      {/* Overlay drag handle — top-left dots grid */}
+      {panelMode==='overlay' && (
+        <Box data-no-drag={false} sx={{position:'absolute',top:'50%',left:6,transform:'translateY(-50%)',display:'grid',gridTemplateColumns:'repeat(2,4px)',gap:0.375,pointerEvents:'none'}}>
+          {[...Array(6)].map((_,i)=><Box key={i} sx={{width:4,height:4,borderRadius:'50%',bgcolor:palette.neutral[200]}}/>)}
+        </Box>
+      )}
+      {/* Left */}
+      <Stack direction="row" alignItems="center" gap="16px" sx={{flex:"1 0 0",minWidth:0}}>
+        {panelMode==='fullscreen' ? (
+          <Stack direction="row" alignItems="center" gap="8px" sx={{flexShrink:0}}>
+            <ArcheraLogo size={20} tint={palette.text.secondary}/>
+            <Typography sx={{...typography.h4,color:palette.text.secondary,whiteSpace:"nowrap"}}>Archera AI</Typography>
+          </Stack>
+        ) : (
+          <>
+            {F.share ? (
+              <Badge badgeContent={unreadShareCount} invisible={!notificationVisible} onClick={()=>{ if(F.chatHistory){ setShowMenu(true); setNotificationDismissed(true); } }} sx={{cursor:notificationVisible?'pointer':'default','& .MuiBadge-badge':{bgcolor:palette.brandTertiary[500],color:palette.neutral.white,transition:'opacity 0.3s ease',top:4,right:-12}}}>
+                <ArcheraLogo size={28} tint={palette.neutral[400]} sx={{flexShrink:0}}/>
+              </Badge>
+            ) : (
+              <ArcheraLogo size={28} tint={palette.neutral[400]} sx={{flexShrink:0}}/>
+            )}
+          </>
+        )}
+      </Stack>
+      {/* Right: action icons + ToggleButtonGroup */}
+      <Stack data-no-drag direction="row" alignItems="center" gap={1.5} sx={{flexShrink:0}}>
+        {compact && <>
+          <IconButton sx={{width:28,height:28,p:0,flexShrink:0}} title="New chat" onClick={newChat}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M21.99 4C21.99 2.9 21.1 2 20 2H4C2.9 2 2 2.9 2 4V16C2 17.1 2.9 18 4 18H18L22 22L21.99 4ZM17 11H13V15H11V11H7V9H11V5H13V9H17V11Z" fill={C_TERTIARY}/>
+            </svg>
+          </IconButton>
+          {F.chatHistory && panelMode!=='bottom' && <>
+            <IconButton sx={{width:28,height:28,p:0,flexShrink:0}} title="Chat history" onClick={()=>{ setShowMenu(o=>!o); setNotificationDismissed(true); }}>
+              <MuiIcon sx={{fontSize:24,color:showMenu?palette.text.primary:palette.text.secondary}}>view_list</MuiIcon>
+            </IconButton>
+            <Box sx={{width:"1px",bgcolor:color.divider,alignSelf:"stretch",flexShrink:0}}/>
+          </>}
+        </>}
+        {!embedded && <PanelModeToggleGroup panelMode={panelMode} onChange={val=>{
+          if(val==='close'){
+            if(panelMode==='bottom') closeToRail();
+            else if(window.innerWidth>=BP_WIDE) setPanelMode('rail');
+            else closeSidebar();
+          } else if(val==='bottom') openBottom();
+          else if(val) setPanelMode(val);
+        }}/>}
+      </Stack>
+      {/* Animated gradient bottom border — bottom-dock toolbar uses a plain top divider instead (gradient lives on the top bar) */}
+      {panelMode!=='bottom' && <div style={{
+        position:"absolute",bottom:0,left:0,right:0,height:2,opacity:0.50,
+        background:`linear-gradient(90deg,${C_PRIMARY},${C_TERTIARY},${C_PRIMARY},${C_SECONDARY},${C_PRIMARY})`,
+        backgroundSize:"300% 100%",animation:"gradientShift 8s linear infinite",
+      }}/>}
+    </Box>
+    {/* Body */}
+    <Box sx={{flex:1,order:panelMode==='bottom'?1:0,display:"flex",flexDirection:(panelMode==='fullscreen'||panelMode==='bottom')?"row":"column",overflow:"hidden",position:"relative"}}>
+      {F.chatHistory&&panelMode==='fullscreen'&&<ChatMenu sidebar onNewChat={()=>newChat()} onSelectChat={selectChat} receivedShares={receivedShares} onMarkRead={markShareRead} onSelectShared={selectReceivedShare} onShare={cfg=>setShareDialog({...cfg,isConversation:true})} activeChatId={activeChatId} activeShareId={activeShareId} pinned={pinned} all={all} onPin={pinConvo} onUnpin={unpinConvo} onDelete={deleteConvo} onRename={renameConvo}/>}
+      {F.chatHistory&&panelMode==='bottom'&&<ChatMenu sidebar dense showNewChat={false} onNewChat={()=>newChat()} onSelectChat={selectChat} receivedShares={receivedShares} onMarkRead={markShareRead} onSelectShared={selectReceivedShare} onShare={cfg=>setShareDialog({...cfg,isConversation:true})} activeChatId={activeChatId} activeShareId={activeShareId} pinned={pinned} all={all} onPin={pinConvo} onUnpin={unpinConvo} onDelete={deleteConvo} onRename={renameConvo}/>}
+      <Box sx={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
+      {F.chatHistory&&showMenu&&panelMode!=='fullscreen'&&<div onClick={()=>setShowMenu(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.2)',zIndex:4,animation:'backdropIn 0.2s ease'}}/>}
+      {F.chatHistory&&showMenu&&panelMode!=='fullscreen'&&<ChatMenu onNewChat={()=>{newChat();setShowMenu(false);}} onSelectChat={selectChat} receivedShares={receivedShares} onMarkRead={markShareRead} onSelectShared={selectReceivedShare} onShare={cfg=>setShareDialog({...cfg,isConversation:true})} onClose={()=>setShowMenu(false)} activeChatId={activeChatId} activeShareId={activeShareId} pinned={pinned} all={all} onPin={pinConvo} onUnpin={unpinConvo} onDelete={deleteConvo} onRename={renameConvo}/>}
+      <Box ref={scrollRef} onScroll={handleScroll} sx={{flex:1,overflowY:"auto",p:"24px 24px 0"}}>
+        <Container disableGutters maxWidth={panelMode==='fullscreen'||panelMode==='bottom'?'md':false}>
+        {msgs.length===0&&(
+          <Box sx={{display:"flex",flexDirection:"column",alignItems:"flex-start",pt:panelMode==='bottom'?2:8,mb:4}}>
+            <Box sx={{width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center",mb:2}}>
+              <Icon mode="breathe"/>
+            </Box>
+            {isNewChat
+              ? <NewChatView onPrompt={sendPrompt} options={newChatOptions} greeting={newChatGreeting} stacked={panelMode==='fullscreen'||panelMode==='bottom'}/>
+              : <Welcome onPrompt={sendPrompt} stacked={panelMode==='fullscreen'||panelMode==='bottom'} pageName={C.pageName} intro={C.welcomeIntro} prompts={C.suggestedPrompts}/>}
+          </Box>
+        )}
+        <Stack direction="column">
+          {msgs.map(m=>{
+            if(m.type==="shared-divider") return (
+              <Box key={m.id} sx={{animation:'fadeIn 0.4s ease'}}>
+                <SharedByMeta title={m.title} sharedBy={m.sharedBy} date={m.date}/>
+              </Box>
+            );
+            if(m.type==="user") return (
+              <Box key={m.id} ref={m.id===latestUserId?promptRef:null} sx={{display:"flex",justifyContent:"flex-end",pl:"6em",mb:2}}>
+                <UserBubble content={m.content} isLatest={!!m.isFresh}/>
+              </Box>
+            );
+            if(m.type==="thinking") return (
+              <Box key={m.id} sx={{mb:2}}>
+                <Box sx={{display:"flex",gap:2,alignItems:"flex-start",pl:6,position:"relative",minHeight:40}}>
+                  <Box sx={{position:"absolute",left:0,top:0,width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <Icon mode="thinking"/>
+                  </Box>
+                  <Box sx={{flex:1,mt:"0.5rem"}}>
+                    <Phrases active={true} expanded={m.expanded} setExpanded={v=>setExpanded(m.id,v)}/>
+                  </Box>
+                </Box>
+                {m.thinkingTrace&&m.thinkingTrace.length>0&&(
+                  <Box sx={{mt:2}}>
+                    <ThinkingToggle steps={m.thinkingTrace} expanded={m.thinkingExpanded||false} setExpanded={v=>setThinkingExpanded(m.id,v)}/>
+                  </Box>
+                )}
+              </Box>
+            );
+            if(m.type==="response") { const vIdx=m.versionIdx||0; const vLen=(m.versions||[]).length; const pageNum=vIdx+1; const totalPages=Math.max(vLen, vIdx+1); return <ResponseRow key={m.id} html={m.html} instant={m.instant||false} onStreamDone={html=>saveVersion(m.id,html)} pageNum={pageNum} totalPages={totalPages} onResetDone={m.onResetDone} expanded={m.expanded} setExpanded={v=>setExpanded(m.id,v)} steps={m.steps} confirm={m.confirm} onConfirmStatus={s=>setConfirmStatusAndFlow(m.id,s,m.confirm)} choice={m.choice} onChoiceSelect={id=>chooseSelect(m.id,id)} onChoiceConfirm={()=>chooseConfirm(m.id,m.choice)} onChoiceDeny={()=>chooseDeny(m.id)} onRegenerate={()=>regenerateMsg(m.id)} onPrev={()=>navigateVersion(m.id,vIdx-1)} onNext={()=>navigateVersion(m.id,vIdx+1)} compact={responseCompact} reasoning={m.reasoning} reasoningExpanded={m.reasoningExpanded||false} setReasoningExpanded={v=>setReasoningExpanded(m.id,v)} thinkingTrace={m.thinkingTrace} thinkingExpanded={m.thinkingExpanded||false} setThinkingExpanded={v=>setThinkingExpanded(m.id,v)} followUp={m.followUp} onFollowUp={sendPrompt} canShare={F.share} onShare={F.share ? ()=>setShareDialog({isConversation:false, msgId:m.id, title:generateShareTitle(m.html)}) : undefined} canWriteActions={F.writeActions}/>; }
+            return null;
+          })}
+        </Stack>
+        {showWaiting&&(
+          <Box sx={{mb:2,animation:"fadeIn 0.8s ease both"}}>
+            <Box sx={{width:responseCompact?32:40,height:responseCompact?32:40,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <Icon mode="breathe" size={responseCompact?32:40}/>
+            </Box>
+          </Box>
+        )}
+        <div ref={bottomRef}/>
+        </Container>
+        <Box sx={{height:panelMode==='bottom'?`${panelHeight}px`:"90vh"}}/>
+      </Box>
+      <div style={{
+        position:"absolute",bottom:0,left:0,right:0,
+        background:`linear-gradient(to bottom,${palette.surface}00 0%,${palette.surface} 35%)`,
+        padding:"24px 16px 16px",
+      }}>
+        <Container disableGutters maxWidth={panelMode==='fullscreen'||panelMode==='bottom'?'md':false}>
+        <Paper variant="outlined" sx={{borderRadius:6,py:1.5, px:1.75,display:"flex",gap:1.25,alignItems:"center"}}>
+          <IconButton size="small" sx={{flexShrink:0,p:0}}>
+            <MuiIcon baseClassName="material-icons-outlined" sx={{fontSize:18,color:palette.text.secondary}}>attach_file</MuiIcon>
+          </IconButton>
+          <InputBase
+            multiline
+            maxRows={5}
+            inputRef={taRef}
+            value={input}
+            placeholder="Send a message"
+            autoFocus={!embedded && !children}
+            onKeyDown={onKey}
+            onChange={e=>{setInput(e.target.value);}}
+            sx={{flex:1,fontSize:14,lineHeight:"20px",color:palette.text.primary,p:0}}
+          />
+          <IconButton size="small" onClick={send} disabled={busy||!input.trim()} sx={{flexShrink:0,p:0,opacity:busy||!input.trim()?0.3:1}}>
+            <MuiIcon sx={{fontSize:18,color:palette.uiPrimary[300]}}>send</MuiIcon>
+          </IconButton>
+        </Paper>
+        </Container>
+      </div>
+      </Box>
+    </Box>
+  </>);
+
+  // Chat off: render the host page in a plain AppShell (or nothing when embedded).
+  if (chatOff) return children ? <AppShell {...appShell}>{children}</AppShell> : (embedded ? null : <AppShell {...appShell}><PagePlaceholder panelOpen={false}/></AppShell>);
+
+  if (embedded) return (<>
+    <Snackbar open={!!snackbar} autoHideDuration={4000} onClose={()=>setSnackbar(null)} anchorOrigin={{vertical:'bottom',horizontal:'center'}}>
+      <Alert onClose={()=>setSnackbar(null)} severity="success" variant="filled" sx={{width:'100%'}}>
+        {snackbar}
+      </Alert>
+    </Snackbar>
+    {F.share && <ShareDialog open={!!shareDialog} config={shareDialog} onClose={()=>setShareDialog(null)} onShare={({accounts,includeConversation})=>{
+      const what = (shareDialog?.isConversation||includeConversation) ? 'Conversation' : 'Response';
+      const who = accounts==='all' ? 'everyone in your organization' : accounts.length===1 ? '1 person' : `${accounts.length} people`;
+      setSnackbar(`${what} shared with ${who}.`);
+    }}/>}
+    {styleBlock}
+    <Box sx={{height:'100%',width:'100%',display:'flex',flexDirection:'column',bgcolor:'background.paper',overflow:'hidden'}}>{chatPanel}</Box>
+  </>);
+
+  return (<>
+    <Snackbar open={!!snackbar} autoHideDuration={4000} onClose={()=>setSnackbar(null)} anchorOrigin={{vertical:'bottom',horizontal:'center'}}>
+      <Alert onClose={()=>setSnackbar(null)} severity="success" variant="filled" sx={{width:'100%'}}>
+        {snackbar}
+      </Alert>
+    </Snackbar>
+    {F.share && <ShareDialog open={!!shareDialog} config={shareDialog} onClose={()=>setShareDialog(null)} onShare={({accounts,includeConversation})=>{
+      const what = (shareDialog?.isConversation||includeConversation) ? 'Conversation' : 'Response';
+      const who = accounts==='all' ? 'everyone in your organization' : accounts.length===1 ? '1 person' : `${accounts.length} people`;
+      setSnackbar(`${what} shared with ${who}.`);
+    }}/>}
+    <AppShell
+      pageName="Commitment Inventory"
+      provider="AWS"
+      navIcons={[{icon:'list_alt'},{icon:'equalizer',active:true},{icon:'workspaces'}]}
+      maxWidth={false}
+      {...appShell}
+      contentStyle={{p:0, position:'relative', overflow:'hidden', ...(appShell?.contentStyle)}}
+    >
+      {styleBlock}
 
       {/* ── Unified layout — always mounted, CSS-driven per mode ── */}
       <div style={{display:'flex', height:'100%', position:'relative'}}>
 
         {/* Page content — never unmounts */}
-        <div style={{flex:1, overflowY:'auto', minWidth:0,
+        <div className="chat-host-scroll" style={{flex:1, overflowY:'auto', minWidth:0,
           paddingBottom: panelVisible && panelMode==='bottom' ? panelHeight + 16 : 0}}>
-          <PagePlaceholder panelOpen={isSidebarOpen}/>
+          {children || <PagePlaceholder panelOpen={isSidebarOpen}/>}
         </div>
 
         {/* Launch FAB — shown when panel is closed */}
@@ -2491,7 +2533,7 @@ export default function App() {
                     <Typography sx={{...typography.micro,color:alpha(palette.neutral.white,0.55)}}>ARCHERA AI</Typography>
                   </Stack>
                   <Typography sx={{...typography.body2,color:palette.neutral.white,mb:1.25,lineHeight:'1.5'}}>
-                    Ask me anything about your <Box component="span" sx={{color:palette.accent1[300],fontWeight:500}}>{PAGE_NAME}</Box>.
+                    Ask me anything about your <Box component="span" sx={{color:palette.accent1[300],fontWeight:500}}>{C.pageName}</Box>.
                   </Typography>
                   <Box
                     onClick={()=>{
