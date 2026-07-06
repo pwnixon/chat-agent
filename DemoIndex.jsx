@@ -37,6 +37,14 @@ const DEMOS = [
     status: "wip",
   },
 ];
+
+// Feature URL params — flags appended to a demo URL to show/hide UI elements and
+// states. These ship inside the @archera/chat-agent package, so they also work in
+// every prototype that embeds the chat.
+const PARAMS = [
+  { param: "?chat=off", desc: "Hide the chat entirely (also accepts 0/false) — renders the plain page with no FAB or panel." },
+  { param: "?dock=on|off", desc: "Force or suppress the chat panel auto-docking open on viewports ≥1440 (overrides the autoOpen prop). Below 1440 it's always the FAB." },
+];
 // ─────────────────────────────────────────────────────────────────────────────
 
 function DemoCard({ title, desc, version, status, onClick }) {
@@ -83,6 +91,23 @@ export default function DemoIndex() {
             />
           ))}
         </Box>
+        {PARAMS.length > 0 && (
+          <Box sx={{ mt: 6 }}>
+            <Typography variant="h5" gutterBottom>URL parameters</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Append to any demo URL to show/hide UI elements and states. These ship with the
+              @archera/chat-agent package, so they work in every prototype that embeds the chat.
+            </Typography>
+            <Stack spacing={1.5}>
+              {PARAMS.map((p) => (
+                <Stack key={p.param} direction="row" spacing={1.5} alignItems="flex-start">
+                  <Chip size="small" variant="outlined" label={p.param} />
+                  <Typography variant="body2" color="text.secondary" sx={{ pt: 0.25 }}>{p.desc}</Typography>
+                </Stack>
+              ))}
+            </Stack>
+          </Box>
+        )}
       </Box>
     </Box>
   );
