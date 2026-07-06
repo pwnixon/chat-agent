@@ -403,14 +403,15 @@ function promptToTitle(prompt) {
 // ─── Suggested prompt chip (shared) ──────────────────────────────────────────
 const STAR_ICON = <svg width="12" height="12" viewBox="0 0 19 18" fill="none" style={{flexShrink:0,marginLeft:8}}><path d="M8.01838 0.757682C8.33029 -0.25256 9.7642 -0.252561 10.0761 0.757681L11.6101 5.72633C11.7157 6.06833 11.9852 6.33538 12.3288 6.43848L17.3281 7.93856C18.3499 8.24517 18.3499 9.68815 17.3281 9.99475L12.3288 11.4948C11.9852 11.5979 11.7157 11.865 11.6101 12.207L10.0761 17.1756C9.7642 18.1859 8.33029 18.1859 8.01838 17.1756L6.48436 12.207C6.37877 11.865 6.10927 11.5979 5.76567 11.4948L0.766365 9.99475C-0.255455 9.68815 -0.255455 8.24517 0.766365 7.93856L5.76566 6.43848C6.10927 6.33538 6.37877 6.06833 6.48436 5.72633L8.01838 0.757682Z" fill={palette.uiPrimary[200]}/></svg>;
 
+// Suggested-prompt chips — full-width medium chips with extra vertical padding.
+// (Pattern-level styling only; the generic MUI Chip is untouched.)
 function PromptChips({ prompts, onPrompt, stacked=false }) {
   return (
-    <Box sx={{display:'flex', flexDirection: stacked ? 'column' : 'row', flexWrap: stacked ? 'nowrap' : 'wrap', gap:1, animation:'fadeIn 0.4s ease'}}>
+    <Box sx={{display:'flex', flexDirection:'column', gap:1, animation:'fadeIn 0.4s ease'}}>
       {prompts.map((p,i)=>(
-        <Chip key={i} onClick={()=>onPrompt(p)} label={p} size="small" variant="outlined" icon={STAR_ICON}
+        <Chip key={i} onClick={()=>onPrompt(p)} label={p} size="medium" variant="outlined" icon={STAR_ICON}
           sx={{borderColor:palette.uiPrimary[200], color:palette.uiPrimary[500], cursor:'pointer',
-            ...(stacked && {width:'fit-content'}),
-            '& .MuiChip-label':{...typography.body2},
+            width:'100%', justifyContent:'flex-start',
             '&:hover':{bgcolor:`${palette.uiPrimary[500]}08`, borderColor:palette.uiPrimary[400]}}}
         />
       ))}
@@ -454,18 +455,24 @@ function NewChatView({ onPrompt, options, greeting='How can I help?', stacked=fa
 // ─── Welcome typewriter ───────────────────────────────────────────────────────
 const WELCOME_INTRO = "Your Commitment Inventory tracks all your active reservations, coverage rates, upcoming expirations, monthly and amortized costs, and total savings — all in one place.";
 
-function Welcome({ onPrompt, stacked=false, pageName=PAGE_NAME, intro=WELCOME_INTRO, prompts=SUGGESTED_PROMPTS }) {
+function Welcome({ onPrompt, stacked=false, pageName=PAGE_NAME, title, intro=WELCOME_INTRO, body, prompts=SUGGESTED_PROMPTS }) {
   const [l1,setL1]=useState(""), [l2,setL2]=useState(""), [phase,setPhase]=useState(1);
-  const f1=pageName, f2=intro;
+  // Larger type is reserved for the typed title + brief teaser; `body` paragraphs
+  // (consumer-provided, e.g. a CUR analysis) render in standard body1 after them.
+  const f1=title||pageName, f2=intro;
 
   useEffect(()=>{let i=0,c=false;function t(){if(c)return;if(i<f1.length){i++;setL1(f1.slice(0,i));setTimeout(t,8+Math.random()*6);}else setPhase(2);}setTimeout(t,100);return()=>{c=true;};},[]);
   useEffect(()=>{if(phase!==2)return;let i=0,c=false;function t(){if(c)return;if(i<f2.length){i++;setL2(f2.slice(0,i));if(i===f2.length)setPhase(3);else setTimeout(t,6+Math.random()*4);}}setTimeout(t,80);return()=>{c=true;};},[phase]);
 
+  const bodyParas = body ? (Array.isArray(body) ? body : [body]) : [];
   return (
     <Box sx={{width:'100%', minWidth:0}}>
       <Typography sx={{...typography.h4,color:palette.text.primary}}>{l1}</Typography>
       {l2&&<Typography sx={{...typography.body3,color:palette.text.secondary,mt:0.75}}>{l2}</Typography>}
-      {phase>=3&&<Box sx={{mt:2}}><PromptChips prompts={prompts} onPrompt={onPrompt} stacked={stacked}/></Box>}
+      {phase>=3&&bodyParas.map((p,i)=>(
+        <Typography key={i} sx={{...typography.body1,color:palette.text.primary,mt:2.5,animation:'fadeIn 0.4s ease'}}>{p}</Typography>
+      ))}
+      {phase>=3&&prompts?.length>0&&<Box sx={{mt:2}}><PromptChips prompts={prompts} onPrompt={onPrompt} stacked={stacked}/></Box>}
     </Box>
   );
 }
@@ -2382,7 +2389,7 @@ export default function App({ embedded = false, content, features, appShell, chi
             </Box>
             {isNewChat
               ? <NewChatView onPrompt={sendPrompt} options={newChatOptions} greeting={newChatGreeting} stacked={panelMode==='fullscreen'||panelMode==='bottom'}/>
-              : <Welcome onPrompt={sendPrompt} stacked={panelMode==='fullscreen'||panelMode==='bottom'} pageName={C.pageName} intro={C.welcomeIntro} prompts={C.suggestedPrompts}/>}
+              : <Welcome onPrompt={sendPrompt} stacked={panelMode==='fullscreen'||panelMode==='bottom'} pageName={C.pageName} title={C.welcomeTitle} intro={C.welcomeIntro} body={C.welcomeBody} prompts={C.suggestedPrompts}/>}
           </Box>
         )}
         <Stack direction="column">
