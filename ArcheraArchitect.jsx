@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useMemo } from "react";
 import { Box, Stack, Typography, IconButton, Paper, InputBase, Button, ButtonBase, Divider, Chip, ToggleButtonGroup, ToggleButton, Tooltip, Container, TextField, Select, MenuItem, FormControl, InputAdornment, Icon as MuiIcon, Menu, ListItemIcon, ListItemText, Link, Collapse, Fab, Skeleton, Fade, Dialog, DialogTitle, DialogContent, DialogActions, Badge, Checkbox, FormControlLabel, Alert, Snackbar } from '@mui/material';
 import { lighten, darken, alpha } from '@mui/material/styles';
 import AppShell from '@archera/design-system/AppShell';
@@ -742,28 +742,43 @@ function StepCards({ steps }) {
 }
 
 // ─── Response row ─────────────────────────────────────────────────────────────
+// Strip <a class="resp-btn"> links from html before streaming so they never
+// partially render mid-type; returned as {streamHtml, btns:[{href,label}]}.
+function extractRespBtns(html) {
+  const btns=[];
+  const streamHtml=html.replace(/<a\s+class="resp-btn"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g,(_,href,label)=>{
+    btns.push({href,label:label.replace(/<[^>]+>/g,'').trim()});
+    return '';
+  });
+  return {streamHtml,btns};
+}
+
 function ResponseRow({ html, instant=false, onStreamDone, pageNum, totalPages, onResetDone, expanded, setExpanded, steps, confirm, onConfirmStatus, choice, onChoiceSelect, onChoiceConfirm, onChoiceDeny, onRegenerate, onPrev, onNext, compact=false, reasoning, reasoningExpanded, setReasoningExpanded, thinkingTrace, thinkingExpanded, setThinkingExpanded, followUp, onFollowUp, onShare, canShare=true, canWriteActions=true }) {
-  const [disp,setDisp]=useState(()=>instant?html:"");
+  const {streamHtml,btns}=useMemo(()=>extractRespBtns(html),[html]);
+  const [disp,setDisp]=useState(()=>instant?streamHtml:"");
   const [iconMode,setIconMode]=useState(()=>instant?"done":"success");
   const [streamDone,setStreamDone]=useState(()=>instant);
   const [successDone,setSuccessDone]=useState(()=>instant);
   const idx=useRef(0);
   useEffect(()=>{
     idx.current=0;setStreamDone(false);setSuccessDone(false);
-    if(instant){setDisp(html);setStreamDone(true);setSuccessDone(true);setIconMode("done");return;}
+    if(instant){setDisp(streamHtml);setStreamDone(true);setSuccessDone(true);setIconMode("done");return;}
     setDisp("");setIconMode("success");
-    function stream(){if(idx.current<html.length){idx.current=Math.min(idx.current+2,html.length);setDisp(html.slice(0,idx.current));setTimeout(stream,18);}else setStreamDone(true);}
+    function stream(){if(idx.current<streamHtml.length){idx.current=Math.min(idx.current+2,streamHtml.length);setDisp(streamHtml.slice(0,idx.current));setTimeout(stream,18);}else setStreamDone(true);}
     stream();
   },[html,instant]);
   useEffect(()=>{if(streamDone&&!instant)onStreamDone?.(html);},[streamDone]);
   useEffect(()=>{if(streamDone&&successDone&&!instant)setIconMode("reset");},[streamDone,successDone]);
-  const done=streamDone&&disp===html&&disp.length>0;
+  const done=streamDone&&disp===streamHtml&&disp.length>0;
   function handleIconDone(){if(iconMode==="success")setSuccessDone(true);else if(iconMode==="reset"){if(onResetDone)onResetDone();setIconMode("done");}}
   const content = (
     <div style={{display:"flex",flexDirection:"column",gap:8,flex:1,minWidth:0}}>
       {thinkingTrace?.length>0&&<Box sx={{mb:2}}><ThinkingToggle steps={thinkingTrace} expanded={thinkingExpanded} setExpanded={setThinkingExpanded} instant/></Box>}
       {steps&&<StepCards steps={steps}/>}
       <div className="resp-html" dangerouslySetInnerHTML={{__html:disp+(done?"":"<span style='opacity:.4'>|</span>")}} />
+      {done&&btns.length>0&&<div style={{marginTop:8,display:'flex',flexDirection:'column',gap:6,animation:'fadeIn 0.3s ease'}}>
+        {btns.map((b,i)=><a key={i} href={b.href} target="_blank" rel="noopener" className="resp-btn" style={{textAlign:'center'}}>{b.label}</a>)}
+      </div>}
       {done&&canWriteActions&&confirm&&(
         <div style={{marginTop:12}}>
           {confirm.type==="automation"
@@ -2071,15 +2086,18 @@ export default function App({ embedded = false, content, features, appShell, chi
     const steps = pickThinkingSteps(4);
     const traceMs = steps.reduce((t,s)=>t+(s.length/2)*15+300, 0);
     setMsgs(prev=>[...prev.filter(m=>m.type!=="waiting"),{id:uid,type:"user",content:msg,isFresh:true},{id:uid+1,type:"thinking",expanded:false,thinkingTrace:steps,thinkingExpanded:thinkingPref.current}]);
+    // Consumer-provided canned responses (content.promptResponses: { [prompt]: {html, followUp?} })
+    // take priority; then built-in flows; then the round-robin demo responses.
+    const canned = C.promptResponses?.[msg];
     const isAutoSetup = msg === "Set up purchase automation";
-    const resp = isAutoSetup ? FLOW_SETUP_AUTOMATION_OFFER : RESP[ri%RESP.length];
-    if(!isAutoSetup) setRi(i=>(i+1)%RESP.length);
+    const resp = canned || (isAutoSetup ? FLOW_SETUP_AUTOMATION_OFFER : RESP[ri%RESP.length]);
+    if(!canned && !isAutoSetup) setRi(i=>(i+1)%RESP.length);
     const respHtml=resp.html;
     const respConfirm=resp.confirm;
     const delay=dev ? Math.max(traceMs+1200, 2500) : (3+Math.floor(Math.random()*2))*2800+600;
     setTimeout(()=>{
       setMsgs(prev=>{
-        return prev.map(m=>m.id===uid+1?{id:uid+2,type:"response",html:respHtml,confirm:respConfirm,thinkingTrace:steps,reasoning:pickReasoningSteps(),followUp:pickFollowUp(),pageNum:1,totalPages:1,expanded:sourcesPref.current,reasoningExpanded:reasoningPref.current,thinkingExpanded:thinkingPref.current,onResetDone:addWaiting}:m);
+        return prev.map(m=>m.id===uid+1?{id:uid+2,type:"response",html:respHtml,confirm:respConfirm,thinkingTrace:steps,reasoning:pickReasoningSteps(),followUp:resp.followUp!==undefined?resp.followUp:pickFollowUp(),pageNum:1,totalPages:1,expanded:sourcesPref.current,reasoningExpanded:reasoningPref.current,thinkingExpanded:thinkingPref.current,onResetDone:addWaiting}:m);
       });
       if(isNewConvo) renameConvo(uid, promptToTitle(msg));
       setBusy(false);
@@ -2297,6 +2315,8 @@ export default function App({ embedded = false, content, features, appShell, chi
         .resp-html ul{margin:4px 0 8px 0;padding-left:18px;}
         .resp-html li{font-size:14px;line-height:20px;color:rgba(9,10,29,.65);font-family:Roboto,sans-serif;margin-bottom:4px;}
         .resp-html li:last-child{margin-bottom:0;}
+        a.resp-btn{display:inline-block;padding:8px 12px;border-radius:4px;background:${C_PRIMARY};color:${palette.neutral.white};font-family:Roboto,sans-serif;font-size:12px;line-height:12px;font-weight:500;letter-spacing:0.4px;text-transform:uppercase;text-decoration:none;}
+        a.resp-btn:hover{background:${palette.brandPrimary[700]};}
         .icon-btn{background:transparent;border:none;cursor:pointer;padding:4px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:${palette.text.secondary};}
         .icon-btn:hover{background:rgba(0,0,0,0.05);}
         ::-webkit-scrollbar{width:3px;}
