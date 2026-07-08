@@ -461,8 +461,11 @@ function Welcome({ onPrompt, stacked=false, pageName=PAGE_NAME, title, intro=WEL
   // (consumer-provided, e.g. a CUR analysis) render in standard body1 after them.
   const f1=title||pageName, f2=intro;
 
-  useEffect(()=>{let i=0,c=false;function t(){if(c)return;if(i<f1.length){i++;setL1(f1.slice(0,i));setTimeout(t,8+Math.random()*6);}else setPhase(2);}setTimeout(t,100);return()=>{c=true;};},[]);
-  useEffect(()=>{if(phase!==2)return;let i=0,c=false;function t(){if(c)return;if(i<f2.length){i++;setL2(f2.slice(0,i));if(i===f2.length)setPhase(3);else setTimeout(t,6+Math.random()*4);}}setTimeout(t,80);return()=>{c=true;};},[phase]);
+  // Retype from the top whenever the content changes (e.g. the planner switching
+  // toolbar tabs while the welcome screen is showing) — not just on mount, or the
+  // title/intro would stay frozen on the tab the chat was first opened on.
+  useEffect(()=>{let i=0,c=false;setL1("");setL2("");setPhase(1);function t(){if(c)return;if(i<f1.length){i++;setL1(f1.slice(0,i));setTimeout(t,8+Math.random()*6);}else setPhase(2);}setTimeout(t,100);return()=>{c=true;};},[f1,f2]);
+  useEffect(()=>{if(phase!==2)return;let i=0,c=false;setL2("");function t(){if(c)return;if(i<f2.length){i++;setL2(f2.slice(0,i));if(i===f2.length)setPhase(3);else setTimeout(t,6+Math.random()*4);}}setTimeout(t,80);return()=>{c=true;};},[phase,f2]);
 
   const bodyParas = body ? (Array.isArray(body) ? body : [body]) : [];
   return (
@@ -2028,7 +2031,7 @@ export default function App({ embedded = false, content, features, appShell, chi
       ];
     });
     setActiveId(Date.now());
-    const delay=dev?400:(3+Math.floor(Math.random()*2))*2800+600;
+    const delay=dev?400:2500; // regenerate: brief pause (was 9–12s)
     setTimeout(()=>{
       userScrolled.current=false;
       isProgrammaticScroll.current=false;
@@ -2094,7 +2097,10 @@ export default function App({ embedded = false, content, features, appShell, chi
     if(!canned && !isAutoSetup) setRi(i=>(i+1)%RESP.length);
     const respHtml=resp.html;
     const respConfirm=resp.confirm;
-    const delay=dev ? Math.max(traceMs+1200, 2500) : (3+Math.floor(Math.random()*2))*2800+600;
+    // Brief, responsive "thinking" pause. `?demo=dev` keeps the fuller trace
+    // pacing for demos; everywhere else it's a short pause (~1–1.5s) so the reply
+    // doesn't feel sluggish. (Was 9–12s, which felt like a hang.)
+    const delay=dev ? Math.max(traceMs+1200, 2500) : Math.min(Math.max(traceMs*0.85, 2700), 3700);
     setTimeout(()=>{
       setMsgs(prev=>{
         return prev.map(m=>m.id===uid+1?{id:uid+2,type:"response",html:respHtml,confirm:respConfirm,thinkingTrace:steps,reasoning:pickReasoningSteps(),followUp:resp.followUp!==undefined?resp.followUp:pickFollowUp(),pageNum:1,totalPages:1,expanded:sourcesPref.current,reasoningExpanded:reasoningPref.current,thinkingExpanded:thinkingPref.current,onResetDone:addWaiting}:m);
@@ -2121,7 +2127,10 @@ export default function App({ embedded = false, content, features, appShell, chi
       : pickThinkingSteps(4);
     const traceMs = flowSteps.reduce((t,s)=>t+(s.length/2)*15+300, 0);
     setMsgs(prev=>[...prev.filter(m=>m.type!=="waiting"),{id:uid,type:"user",content:userMsg,isFresh:true},{id:uid+1,type:"thinking",expanded:false,thinkingTrace:flowSteps,thinkingExpanded:thinkingPref.current}]);
-    const delay=dev ? Math.max(traceMs+1200, 2500) : (3+Math.floor(Math.random()*2))*2800+600;
+    // Brief, responsive "thinking" pause. `?demo=dev` keeps the fuller trace
+    // pacing for demos; everywhere else it's a short pause (~1–1.5s) so the reply
+    // doesn't feel sluggish. (Was 9–12s, which felt like a hang.)
+    const delay=dev ? Math.max(traceMs+1200, 2500) : Math.min(Math.max(traceMs*0.85, 2700), 3700);
     setTimeout(()=>{
       setMsgs(prev=>prev.map(m=>m.id===uid+1?{id:uid+2,type:"response",pageNum:1,totalPages:1,expanded:sourcesPref.current,reasoningExpanded:reasoningPref.current,thinkingExpanded:thinkingPref.current,onResetDone:addWaiting,...responseObj,thinkingTrace:flowSteps,reasoning:responseObj.reasoning||pickReasoningSteps(),followUp:responseObj.followUp||pickFollowUp()}:m));
       setBusy(false);
