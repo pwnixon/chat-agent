@@ -1844,11 +1844,21 @@ export default function App({ embedded = false, content, features, appShell, chi
   const savedPanel = useMemo(() => {
     try { return JSON.parse(localStorage.getItem('archera-chat-panel')) || null; } catch { return null; }
   }, []);
-  const dockForced = ['off','0','false','on','1','true'].includes(dockParam);
+  // Explicit ?dock= flags beat the saved state. ?dock=on means "arrive with the
+  // panel open" (cross-prototype links append it so continuity survives an origin
+  // change, where localStorage can't follow — e.g. localhost → the deployed site);
+  // it prefers the saved mode/size when present. ?dock=off forces FAB-only.
+  const dockForcedOn = ['on','1','true'].includes(dockParam);
+  const dockForcedOff = ['off','0','false'].includes(dockParam);
   const PANEL_MODES = ['sidebar','bottom','overlay','fullscreen'];
+  const savedMode = PANEL_MODES.includes(savedPanel?.mode) ? savedPanel.mode : null;
+  // Saved/forced sidebar dock doesn't fit a narrow viewport — fall back to overlay.
+  const fitMode = (m) => (m === 'sidebar' && window.innerWidth < BP_MED ? 'overlay' : m);
   const [panelOpen,setPanelOpen]=useState(()=>{
     if (embedded) return true;
-    if (!dockForced && savedPanel?.open != null) return savedPanel.open;
+    if (dockForcedOff) return false;
+    if (dockForcedOn) return true;
+    if (savedPanel?.open != null) return savedPanel.open;
     return getInitialPanelState(autoDock).open;
   });
   const scrollRef=useRef(null), taRef=useRef(null);
@@ -1856,10 +1866,8 @@ export default function App({ embedded = false, content, features, appShell, chi
   const promptRef=useRef(null);
   const [panelMode, setPanelMode]=useState(()=>{
     if (embedded) return 'sidebar';
-    if (!dockForced && PANEL_MODES.includes(savedPanel?.mode)) {
-      // Saved sidebar dock doesn't fit a narrow viewport — fall back to overlay.
-      return savedPanel.mode === 'sidebar' && window.innerWidth < BP_MED ? 'overlay' : savedPanel.mode;
-    }
+    if (dockForcedOn) return fitMode(savedMode || 'sidebar');
+    if (!dockForcedOff && savedMode) return fitMode(savedMode);
     return getInitialPanelState(autoDock).mode;
   });
   const [showFabBubble, setShowFabBubble]=useState(false);

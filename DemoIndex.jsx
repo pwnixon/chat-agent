@@ -43,7 +43,7 @@ const DEMOS = [
 // every prototype that embeds the chat.
 const PARAMS = [
   { param: "?chat=off", desc: "Hide the chat entirely (also accepts 0/false) — renders the plain page with no FAB or panel." },
-  { param: "?dock=on|off", desc: "Force or suppress the chat panel auto-docking open on viewports ≥1440 (overrides the autoOpen prop). Below 1440 it's always the FAB." },
+  { param: "?dock=on|off", desc: "on = arrive with the panel open (saved dock mode/size preferred; sidebar ≥1280, overlay below) — cross-prototype links append it since localStorage persistence can't cross origins. off = force FAB-only. Overrides the autoOpen prop and saved state." },
   { param: "?fab-tooltip=on", desc: "Show the FAB launch-prompt bubble (“Ask me about…”) once on page load. Off by default." },
 ];
 // ─────────────────────────────────────────────────────────────────────────────
