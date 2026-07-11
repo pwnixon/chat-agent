@@ -1836,15 +1836,40 @@ export default function App({ embedded = false, content, features, appShell, chi
   const [activeChatId,setActiveChatId]=useState(null);
   const [snackbar,setSnackbar]=useState(null); // null | string message
   const [notificationDismissed,setNotificationDismissed]=useState(false);
-  const [panelOpen,setPanelOpen]=useState(()=>embedded ? true : getInitialPanelState(autoDock).open);
+  // ── Panel-state persistence ────────────────────────────────────────────────
+  // open/dock/size persist to localStorage so the panel follows the user across
+  // pages AND prototypes on the same origin (e.g. the anomaly-detection chat's
+  // "View in Exchanges" cross-link). Explicit ?dock= flags beat the saved state;
+  // `embedded` panels are excluded (they're forced open in their container).
+  const savedPanel = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('archera-chat-panel')) || null; } catch { return null; }
+  }, []);
+  const dockForced = ['off','0','false','on','1','true'].includes(dockParam);
+  const PANEL_MODES = ['sidebar','bottom','overlay','fullscreen'];
+  const [panelOpen,setPanelOpen]=useState(()=>{
+    if (embedded) return true;
+    if (!dockForced && savedPanel?.open != null) return savedPanel.open;
+    return getInitialPanelState(autoDock).open;
+  });
   const scrollRef=useRef(null), taRef=useRef(null);
   const [activeId, setActiveId]=useState(null);
   const promptRef=useRef(null);
-  const [panelMode, setPanelMode]=useState(()=>embedded ? 'sidebar' : getInitialPanelState(autoDock).mode);
+  const [panelMode, setPanelMode]=useState(()=>{
+    if (embedded) return 'sidebar';
+    if (!dockForced && PANEL_MODES.includes(savedPanel?.mode)) {
+      // Saved sidebar dock doesn't fit a narrow viewport — fall back to overlay.
+      return savedPanel.mode === 'sidebar' && window.innerWidth < BP_MED ? 'overlay' : savedPanel.mode;
+    }
+    return getInitialPanelState(autoDock).mode;
+  });
   const [showFabBubble, setShowFabBubble]=useState(false);
   const fabBubbleFired=useRef(false);
-  const [panelWidth, setPanelWidth]=useState(380);
-  const [panelHeight, setPanelHeight]=useState(300); // for bottom dock
+  const [panelWidth, setPanelWidth]=useState(savedPanel?.width ?? 380);
+  const [panelHeight, setPanelHeight]=useState(savedPanel?.height ?? 300); // for bottom dock
+  useEffect(()=>{
+    if (embedded) return;
+    try { localStorage.setItem('archera-chat-panel', JSON.stringify({ open: panelOpen, mode: panelMode, width: panelWidth, height: panelHeight })); } catch { /* storage unavailable */ }
+  },[embedded, panelOpen, panelMode, panelWidth, panelHeight]);
   const [lastMode, setLastMode]=useState('sidebar'); // tracks last non-rail mode for rail placement
   const [bottomVisible, setBottomVisible]=useState(false);
   const bottomSlideTimer=useRef(null);
