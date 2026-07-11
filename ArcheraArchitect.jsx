@@ -2562,7 +2562,7 @@ export default function App({ embedded = false, content, features, appShell, chi
                     <Typography sx={{...typography.micro,color:alpha(palette.neutral.white,0.55)}}>ARCHERA AI</Typography>
                   </Stack>
                   <Typography sx={{...typography.body2,color:palette.neutral.white,mb:1.25,lineHeight:'1.5'}}>
-                    Ask me anything about your <Box component="span" sx={{color:palette.accent1[300],fontWeight:500}}>{C.pageName}</Box>.
+                    Ask me about your <Box component="span" sx={{color:palette.accent1[300],fontWeight:500}}>{C.pageName}</Box>.
                   </Typography>
                   {fabPrompt && (
                     <Box

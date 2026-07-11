@@ -44,7 +44,7 @@ const DEMOS = [
 const PARAMS = [
   { param: "?chat=off", desc: "Hide the chat entirely (also accepts 0/false) — renders the plain page with no FAB or panel." },
   { param: "?dock=on|off", desc: "Force or suppress the chat panel auto-docking open on viewports ≥1440 (overrides the autoOpen prop). Below 1440 it's always the FAB." },
-  { param: "?fab-tooltip=on", desc: "Show the FAB launch-prompt bubble (“Ask me anything…”) once on page load. Off by default." },
+  { param: "?fab-tooltip=on", desc: "Show the FAB launch-prompt bubble (“Ask me about…”) once on page load. Off by default." },
 ];
 // ─────────────────────────────────────────────────────────────────────────────
 
