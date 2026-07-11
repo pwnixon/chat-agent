@@ -44,7 +44,7 @@ const DEMOS = [
 const PARAMS = [
   { param: "?chat=off", desc: "Hide the chat entirely (also accepts 0/false) — renders the plain page with no FAB or panel." },
   { param: "?dock=on|off", desc: "on = arrive with the panel open (saved dock mode/size preferred; sidebar ≥1280, overlay below) — cross-prototype links append it since localStorage persistence can't cross origins. off = force FAB-only. Overrides the autoOpen prop and saved state." },
-  { param: "?fab-tooltip=on", desc: "Show the FAB launch-prompt bubble (“Ask me about…”) once on page load. Off by default." },
+  { param: "?fab-tooltip=on", desc: "Show the FAB launch-prompt bubble (“Ask me about…”) once on page load. Implies the FAB-first state (beats a persisted-open panel; explicit ?dock=on wins). Off by default." },
 ];
 // ─────────────────────────────────────────────────────────────────────────────
 

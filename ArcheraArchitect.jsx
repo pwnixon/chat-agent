@@ -1858,6 +1858,9 @@ export default function App({ embedded = false, content, features, appShell, chi
     if (embedded) return true;
     if (dockForcedOff) return false;
     if (dockForcedOn) return true;
+    // ?fab-tooltip=on implies the FAB-first state — the launch bubble can't show
+    // over an open panel, so it beats any persisted-open state.
+    if (fabTooltip) return false;
     if (savedPanel?.open != null) return savedPanel.open;
     return getInitialPanelState(autoDock).open;
   });
