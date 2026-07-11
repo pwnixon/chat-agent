@@ -1784,6 +1784,9 @@ export default function App({ embedded = false, content, features, appShell, chi
   const dev = demo === 'dev';
   // Merged content — consumers override any field via the `content` prop; module consts are the defaults.
   const C = { pageName: PAGE_NAME, suggestedPrompts: SUGGESTED_PROMPTS, initMsgs: INIT_MSGS, welcomeIntro: WELCOME_INTRO, ...content };
+  // FAB bubble teaser prompt — the page's first suggested prompt (consumer content,
+  // not the package default). Null when the consumer hides prompts with [].
+  const fabPrompt = C.suggestedPrompts?.[0] ?? null;
   // Feature flags — consumers strip in-chat workflows from the embeddable chat. All default true so the standalone demo is unchanged.
   const F = { writeActions: true, share: true, chatHistory: true, ...features };
   // Chat on/off + auto-dock behavior: set per-consumer (props) or overridden per-URL.
@@ -2561,18 +2564,20 @@ export default function App({ embedded = false, content, features, appShell, chi
                   <Typography sx={{...typography.body2,color:palette.neutral.white,mb:1.25,lineHeight:'1.5'}}>
                     Ask me anything about your <Box component="span" sx={{color:palette.accent1[300],fontWeight:500}}>{C.pageName}</Box>.
                   </Typography>
-                  <Box
-                    onClick={()=>{
-                      setShowFabBubble(false);
-                      fabBubbleFired.current=true;
-                      openPanel();
-                      setMsgs([]); setActiveShareId(null); setActiveChatId(null);
-                      sendPrompt(SUGGESTED_PROMPTS[0]);
-                    }}
-                    sx={{display:'inline-flex',alignItems:'flex-start',gap:0.75,px:1.25,py:0.75,borderRadius:3,border:`1px solid ${alpha(palette.neutral.white,0.25)}`,bgcolor:alpha(palette.neutral.white,0.1),cursor:'pointer','&:hover':{bgcolor:alpha(palette.neutral.white,0.18)}}}
-                  >
-                    <Typography sx={{...typography.body2,color:alpha(palette.neutral.white,0.9),lineHeight:1.5}}>{SUGGESTED_PROMPTS[0]}</Typography>
-                  </Box>
+                  {fabPrompt && (
+                    <Box
+                      onClick={()=>{
+                        setShowFabBubble(false);
+                        fabBubbleFired.current=true;
+                        openPanel();
+                        setMsgs([]); setActiveShareId(null); setActiveChatId(null);
+                        sendPrompt(fabPrompt);
+                      }}
+                      sx={{display:'inline-flex',alignItems:'flex-start',gap:0.75,px:1.25,py:0.75,borderRadius:3,border:`1px solid ${alpha(palette.neutral.white,0.25)}`,bgcolor:alpha(palette.neutral.white,0.1),cursor:'pointer','&:hover':{bgcolor:alpha(palette.neutral.white,0.18)}}}
+                    >
+                      <Typography sx={{...typography.body2,color:alpha(palette.neutral.white,0.9),lineHeight:1.5}}>{fabPrompt}</Typography>
+                    </Box>
+                  )}
                 </Box>
               </Paper>
             </Box>
