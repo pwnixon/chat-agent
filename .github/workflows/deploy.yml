@@ -5,6 +5,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# A newer push cancels any in-flight deploy for the superseded commit
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 permissions:
   contents: read
   pages: write
