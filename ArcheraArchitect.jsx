@@ -1764,7 +1764,7 @@ function getInitialPanelState(autoOpen = true) {
   return             { open: false, mode: w >= BP_MED ? 'sidebar' : 'overlay' };
 }
 
-// ─── Panel mode toggle group (shared by header and bottom rail) ───────────────
+// ─── Panel mode toggle group (chat header) ─────────────────────────────────────
 function PanelModeToggleGroup({ panelMode, onChange, tooltipPlacement='bottom', orientation='horizontal' }) {
   const p = tooltipPlacement;
   const vertical = orientation === 'vertical';
@@ -1881,8 +1881,7 @@ export default function App({ embedded = false, content, features, appShell, chi
     if (embedded) return;
     try { localStorage.setItem('archera-chat-panel', JSON.stringify({ open: panelOpen, mode: panelMode, width: panelWidth, height: panelHeight })); } catch { /* storage unavailable */ }
   },[embedded, panelOpen, panelMode, panelWidth, panelHeight]);
-  const [lastMode, setLastMode]=useState('sidebar'); // tracks last non-rail mode for rail placement
-  const [bottomVisible, setBottomVisible]=useState(false);
+  const [bottomVisible, setBottomVisible]=useState(()=>panelOpen && panelMode==='bottom');
   const bottomSlideTimer=useRef(null);
   const [overlayRect, setOverlayRect]=useState(null); // {left,top,w,h} — overlay position/size
   const panelRef=useRef(null);
@@ -1973,9 +1972,7 @@ export default function App({ embedded = false, content, features, appShell, chi
   },[panelOpen]);
 
   useEffect(()=>{
-    if(panelMode==='fullscreen'||panelMode==='rail'||panelMode==='bottom') setShowMenu(false);
-    if(panelMode==='fullscreen'||panelMode==='bottom') setNotificationDismissed(true);
-    if(panelMode!=='rail') setLastMode(panelMode);
+    if(panelMode==='fullscreen'||panelMode==='bottom'){ setShowMenu(false); setNotificationDismissed(true); }
     if(panelMode!=='bottom') setBottomVisible(false);
   },[panelMode]);
 
@@ -2219,13 +2216,14 @@ export default function App({ embedded = false, content, features, appShell, chi
 
   function openBottom(){
     clearTimeout(bottomSlideTimer.current);
-    setPanelMode('bottom');
+    setPanelOpen(true); setPanelMode('bottom');
     requestAnimationFrame(()=>requestAnimationFrame(()=>setBottomVisible(true)));
   }
-  function closeToRail(){
+  function closeBottom(){
+    // slide the dock down, then return to the FAB
     setBottomVisible(false);
     clearTimeout(bottomSlideTimer.current);
-    bottomSlideTimer.current=setTimeout(()=>setPanelMode('rail'), 280);
+    bottomSlideTimer.current=setTimeout(()=>{ setPanelOpen(false); setShowMenu(false); }, 280);
   }
   function openSidebar(){
     setPanelOpen(true); setPanelMode('sidebar');
@@ -2234,7 +2232,7 @@ export default function App({ embedded = false, content, features, appShell, chi
     setPanelOpen(false); setShowMenu(false);
   }
 
-  // Bottom dock: click to collapse to rail, drag to resize height
+  // Bottom dock: click to close (back to FAB), drag to resize height
   function startBottomDockResize(e){
     e.preventDefault();
     const startY=e.clientY, startH=panelHeight;
@@ -2246,12 +2244,12 @@ export default function App({ embedded = false, content, features, appShell, chi
     function onUp(){
       window.removeEventListener('mousemove',onMove);
       window.removeEventListener('mouseup',onUp);
-      if(!dragged) closeToRail();
+      if(!dragged) closeBottom();
     }
     window.addEventListener('mousemove',onMove); window.addEventListener('mouseup',onUp);
   }
 
-  // Sidebar: click to collapse to rail, drag to resize width
+  // Sidebar: click to close (back to FAB), drag to resize width
   function startPanelResize(e){
     if(panelMode!=='sidebar') return;
     e.preventDefault();
@@ -2264,7 +2262,7 @@ export default function App({ embedded = false, content, features, appShell, chi
     function onUp(){
       window.removeEventListener('mousemove',onMove);
       window.removeEventListener('mouseup',onUp);
-      if(!dragged) setPanelMode('rail');
+      if(!dragged) closeSidebar();
     }
     window.addEventListener('mousemove',onMove); window.addEventListener('mouseup',onUp);
   }
@@ -2333,11 +2331,17 @@ export default function App({ embedded = false, content, features, appShell, chi
 
   const compact = panelMode !== 'fullscreen';
   const responseCompact = panelMode === 'sidebar' || panelMode === 'overlay';
-  const panelVisible = panelOpen && panelMode !== 'rail';
+  const panelVisible = panelOpen;
   const unreadShareCount = receivedShares.filter(s=>!s.read).length;
   const notificationVisible = F.share && unreadShareCount > 0 && !notificationDismissed;
   const isSidebarOpen = panelOpen && panelMode === 'sidebar';
-  function openPanel(){ window.innerWidth>=BP_MED ? openSidebar() : (setPanelMode('overlay'), setPanelOpen(true)); }
+  // FAB reopen — restore the last-used mode (retained in state + localStorage);
+  // a sidebar that no longer fits the viewport falls back to overlay.
+  function openPanel(){
+    if(panelMode==='bottom') openBottom();
+    else if(panelMode==='sidebar' && window.innerWidth<BP_MED){ setPanelMode('overlay'); setPanelOpen(true); }
+    else setPanelOpen(true);
+  }
   const styleBlock = (<style>{`
         *{box-sizing:border-box;}
         @keyframes gl{to{transform:rotate(360deg);}}
@@ -2427,8 +2431,8 @@ export default function App({ embedded = false, content, features, appShell, chi
         </>}
         {!embedded && <PanelModeToggleGroup panelMode={panelMode} onChange={val=>{
           if(val==='close'){
-            if(panelMode==='bottom') closeToRail();
-            else if(window.innerWidth>=BP_WIDE) setPanelMode('rail');
+            // Close always returns to the FAB; bottom dock slides down first
+            if(panelMode==='bottom') closeBottom();
             else closeSidebar();
           } else if(val==='bottom') openBottom();
           else if(val) setPanelMode(val);
@@ -2642,9 +2646,9 @@ export default function App({ embedded = false, content, features, appShell, chi
         )}
 
         {panelVisible&&<>
-        {/* Left resize handle — sidebar only; click to collapse, drag to resize */}
+        {/* Left resize handle — sidebar only; click to close, drag to resize */}
         {panelMode==='sidebar' && (
-          <Tooltip title="Click to collapse · Drag to resize" placement="left" arrow>
+          <Tooltip title="Click to close · Drag to resize" placement="left" arrow>
             <div
               onMouseDown={startPanelResize}
               style={{width:10, flexShrink:0, cursor:'col-resize', display:'flex', alignItems:'center', justifyContent:'center', background:'transparent'}}
@@ -2660,48 +2664,8 @@ export default function App({ embedded = false, content, features, appShell, chi
         )}
         </>}
 
-        {/* Rail — collapsed strip (outside panelVisible guard — rail mode sets panelVisible=false) */}
-        {panelOpen && panelMode==='rail' && lastMode!=='bottom' && (
-          <Box onClick={()=>lastMode==='sidebar'?openSidebar():setPanelMode(lastMode)}
-            sx={{width:40,flexShrink:0,borderLeft:`1px solid ${color.divider}`,bgcolor:palette.surface,
-              display:'flex',flexDirection:'column',alignItems:'center',pt:2,pb:1,
-              cursor:'pointer','&:hover':{bgcolor:palette.neutral[50]},transition:'background 0.15s'}}>
-            <Tooltip title="Open Archera AI" placement="left" arrow>
-              <Box sx={{p:0.75,borderRadius:1,display:'flex',alignItems:'center',justifyContent:'center',
-                '&:hover':{bgcolor:palette.neutral[100]},transition:'background 0.15s'}}>
-                <ArcheraLogo size={20}/>
-              </Box>
-            </Tooltip>
-            <Box sx={{flex:1}}/>
-            <PanelModeToggleGroup panelMode={panelMode} orientation="vertical" tooltipPlacement="left" onChange={val=>{
-              if(val==='close') setPanelOpen(false);
-              else if(val==='bottom') openBottom();
-              else if(val) setPanelMode(val);
-            }}/>
-          </Box>
-        )}
-        {/* Rail — bottom strip (outside panelVisible guard — rail mode sets panelVisible=false) */}
-        {panelOpen && panelMode==='rail' && lastMode==='bottom' && (
-          <Box onClick={openBottom} sx={{position:'fixed',bottom:0,left:0,right:0,height:48,
-            borderTop:`1px solid ${color.divider}`,bgcolor:palette.surface,
-            display:'flex',alignItems:'center',px:2,gap:2,zIndex:20,cursor:'pointer',
-            '&:hover':{bgcolor:palette.neutral[50]},transition:'background 0.15s'}}>
-            <Tooltip title="Open Archera AI" placement="top" arrow>
-              <Box sx={{display:'flex',alignItems:'center',gap:1}}>
-                <ArcheraLogo size={20}/>
-              </Box>
-            </Tooltip>
-            <Box sx={{flex:1}}/>
-            <PanelModeToggleGroup panelMode={panelMode} tooltipPlacement="top" onChange={val=>{
-              if(val==='close') setPanelOpen(false);
-              else if(val==='bottom') openBottom();
-              else if(val) setPanelMode(val);
-            }}/>
-          </Box>
-        )}
-
-        {/* Chat panel — always mounted to preserve streaming/animation state across open/close/rail */}
-        <div ref={panelRef} style={(!panelOpen || panelMode==='rail') ? {display:'none'} : {
+        {/* Chat panel — always mounted to preserve streaming/animation state across open/close */}
+        <div ref={panelRef} style={!panelOpen ? {display:'none'} : {
           ...(panelMode==='sidebar' ? {
             position:'relative',
             width:panelWidth, flexShrink:0,
@@ -2745,7 +2709,7 @@ export default function App({ embedded = false, content, features, appShell, chi
           {chatPanel}
           {/* Bottom dock resize handle — thin bar pinned to the top of the dock */}
           {panelMode==='bottom' && (
-            <Tooltip title="Click to collapse · Drag to resize" placement="top" arrow>
+            <Tooltip title="Click to close · Drag to resize" placement="top" arrow>
               <div onMouseDown={startBottomDockResize}
                 style={{order:0,flexShrink:0,height:12,paddingBottom:2,boxSizing:'border-box',cursor:'n-resize',position:'relative',
                   borderTop:`1px solid ${color.divider}`,
