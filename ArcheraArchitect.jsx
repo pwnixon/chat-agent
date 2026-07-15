@@ -780,7 +780,12 @@ function ResponseRow({ html, instant=false, onStreamDone, pageNum, totalPages, o
       {steps&&<StepCards steps={steps}/>}
       <div className="resp-html" dangerouslySetInnerHTML={{__html:disp+(done?"":"<span style='opacity:.4'>|</span>")}} />
       {done&&btns.length>0&&<div style={{marginTop:8,display:'flex',flexDirection:'column',gap:6,animation:'fadeIn 0.3s ease'}}>
-        {btns.map((b,i)=><a key={i} href={b.href} target="_blank" rel="noopener" className="resp-btn" style={{textAlign:'center'}}>{b.label}</a>)}
+        {btns.map((b,i)=> b.href.startsWith('action:')
+          // action: hrefs dispatch a window event instead of navigating — lets a host
+          // page open its own UI (dialogs, drawers) from a chat CTA. detail.action is
+          // the string after the prefix, e.g. "open-exchange:ri-sql".
+          ? <a key={i} href="#" className="resp-btn" style={{textAlign:'center'}} onClick={(e)=>{e.preventDefault(); window.dispatchEvent(new CustomEvent('archera-chat:action',{detail:{action:b.href.slice(7)}}));}}>{b.label}</a>
+          : <a key={i} href={b.href} target="_blank" rel="noopener" className="resp-btn" style={{textAlign:'center'}}>{b.label}</a>)}
       </div>}
       {done&&canWriteActions&&confirm&&(
         <div style={{marginTop:12}}>
