@@ -51,7 +51,7 @@ const PARAMS = [
 function DemoCard({ title, desc, version, status, onClick }) {
   return (
     <Card variant="outlined" sx={{ height: '100%' }}>
-      <CardActionArea onClick={onClick} sx={{ height: '100%', alignItems: 'stretch' }}>
+      <CardActionArea onClick={onClick} sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch', justifyContent: 'flex-start' }}>
         <CardContent>
           <Stack spacing={1.25}>
             <Stack direction="row" spacing={0.75}>
