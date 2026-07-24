@@ -1,5 +1,7 @@
 import { Box, Card, CardActionArea, CardContent, Chip, Stack, Typography } from '@mui/material';
 import { AppHeader } from '@archera/design-system/AppShell';
+import { DS_PARAMS } from '@archera/design-system/demoParams';
+import { CHAT_PARAMS } from './demoParams';
 
 // ─── Edit this to add / remove demos ─────────────────────────────────────────
 const PROJECT = {
@@ -38,13 +40,13 @@ const DEMOS = [
   },
 ];
 
-// Feature URL params — flags appended to a demo URL to show/hide UI elements and
-// states. These ship inside the @archera/chat-agent package, so they also work in
-// every prototype that embeds the chat.
-const PARAMS = [
-  { param: "?chat=off", desc: "Hide the chat entirely (also accepts 0/false) — renders the plain page with no FAB or panel." },
-  { param: "?dock=on|off", desc: "on = arrive with the panel open (saved dock mode/size preferred; sidebar ≥1280, overlay below) — cross-prototype links append it since localStorage persistence can't cross origins. off = force FAB-only. Overrides the autoOpen prop and saved state." },
-  { param: "?fab-tooltip=on", desc: "Show the FAB launch-prompt bubble (“Ask me about…”) once on page load. Implies the FAB-first state (beats a persisted-open panel; explicit ?dock=on wins). Off by default." },
+// Feature URL params. Globals come from the shared packages (Design system +
+// Chat) so they never drift; this prototype adds none of its own.
+const LOCAL_PARAMS = [];
+const PARAM_GROUPS = [
+  { title: 'Design system', params: DS_PARAMS },
+  { title: 'Chat', params: CHAT_PARAMS },
+  { title: 'This prototype', params: LOCAL_PARAMS },
 ];
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -92,19 +94,25 @@ export default function DemoIndex() {
             />
           ))}
         </Box>
-        {PARAMS.length > 0 && (
+        {PARAM_GROUPS.some((g) => g.params.length > 0) && (
           <Box sx={{ mt: 6 }}>
             <Typography variant="h5" gutterBottom>URL parameters</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Append to any demo URL to show/hide UI elements and states. These ship with the
-              @archera/chat-agent package, so they work in every prototype that embeds the chat.
+              Append to any demo URL to show/hide UI elements and states.
             </Typography>
-            <Stack spacing={1.5}>
-              {PARAMS.map((p) => (
-                <Stack key={p.param} direction="row" spacing={1.5} alignItems="flex-start">
-                  <Chip size="small" variant="outlined" label={p.param} />
-                  <Typography variant="body2" color="text.secondary" sx={{ pt: 0.25 }}>{p.desc}</Typography>
-                </Stack>
+            <Stack spacing={3}>
+              {PARAM_GROUPS.filter((g) => g.params.length > 0).map((g) => (
+                <Box key={g.title}>
+                  <Typography variant="overline" color="text.secondary">{g.title}</Typography>
+                  <Stack spacing={1.5} sx={{ mt: 1 }}>
+                    {g.params.map((p) => (
+                      <Stack key={p.param} direction="row" spacing={1.5} alignItems="flex-start">
+                        <Chip size="small" variant="outlined" label={p.param} />
+                        <Typography variant="body2" color="text.secondary" sx={{ pt: 0.25 }}>{p.desc}</Typography>
+                      </Stack>
+                    ))}
+                  </Stack>
+                </Box>
               ))}
             </Stack>
           </Box>

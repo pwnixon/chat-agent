@@ -1110,6 +1110,64 @@ const RESP=[
   {html:`<p>Your Lambda concurrency profile shows several functions with <strong>cold start latency above 800ms</strong>, three of which are in the customer-facing checkout path.</p><p>Enabling Provisioned Concurrency on those three costs an additional <strong>$62/month</strong> but eliminates cold starts entirely.</p>`},
 ];
 
+// ─── Intent routing ──────────────────────────────────────────────────────────
+// Prototype has no live model, so free-text prompts (e.g. from the AppShell ⌘K
+// palette) are matched to a topical canned answer by keyword. No match → the
+// caller falls back to the round-robin RESP so existing demo flows are unchanged.
+const INTENTS = [
+  { k:['coverage','covered','uncovered'],
+    html:`<p>Across your connected accounts, commitment <strong>coverage is ~78%</strong> of reservable spend. The largest uncovered pocket is <strong>EC2 in us-east-1</strong> (~$4.2K/mo on-demand) on steady production load.</p><p>Covering it with <strong>30-day Guaranteed RIs</strong> would lift coverage to ~91% and save an estimated <strong>$1.3K/month</strong> — without long-term lock-in.</p>`,
+    followUp:['Draft a commitment plan','Show uncovered resources'] },
+  { k:['saving','save','discount'],
+    html:`<p>You're realizing about <strong>$18.4K/month</strong> in savings versus on-demand (~24% blended). The biggest remaining opportunity is <strong>$3.1K/month</strong> across uncovered RDS and EC2.</p><p>Want me to draft a commitment plan to capture it?</p>`,
+    followUp:['Draft a commitment plan','Show uncovered resources'] },
+  { k:['anomal','spike','shortfall','unusual',' drop'],
+    html:`<p>I found <strong>2 anomalies</strong> in the last 7 days: a <strong>+38% spike</strong> in NAT Gateway data processing (us-east-1, Jul 21) and a coverage <strong>shortfall</strong> on your Aurora fleet after an instance resize.</p><p>Want to open Anomaly Detection to see the drivers?</p>`,
+    followUp:['Open Anomaly Detection'] },
+  { k:['forecast','projec','next month','trend'],
+    html:`<p>At current run-rate, next month's cloud spend is projected at <strong>~$212K</strong> (±5%), up ~3%, driven mainly by rising EKS usage.</p><p>With your pending commitment plan applied, projected net spend drops to <strong>~$198K</strong>.</p>` },
+  { k:['buyback','sell','release','exchange'],
+    html:`<p>You have <strong>3 commitments</strong> eligible for buyback, representing <strong>$6.8K</strong> in remaining value. Releasing the underused Aurora GRI would recover about <strong>$2,150</strong> as account credit.</p>`,
+    followUp:['Review eligible commitments'] },
+  { k:['invoice','bill','spend','breakdown'],
+    html:`<p>Your latest invoice totals <strong>$204.6K</strong>. Top services: <strong>EC2 $82K</strong>, <strong>RDS $34K</strong>, <strong>S3 $19K</strong>. Commitments offset <strong>$18.4K</strong> of that.</p>`,
+    followUp:['Break down by segment'] },
+  { k:['rightsiz','idle','unused','waste','shut down','turn off'],
+    html:`<p>Quick note — Archera does <strong>rate optimization</strong> (a better price for infrastructure you're already running), not usage/right-sizing, so I won't resize or shut down instances.</p><p>What I <em>can</em> do is make sure steady usage is covered at the best rate. Want me to check coverage on that workload?</p>`,
+    followUp:['Check my coverage'] },
+  { k:['automat','policy','cadence'],
+    html:`<p>Purchase automation lets Archera apply new commitments on a cadence (weekly, monthly, or quarterly) whenever savings clear your threshold — you set the guardrails.</p><p>Want to set it up?</p>`,
+    followUp:['Set up purchase automation'] },
+  { k:['premium','risk premium','pricing','how much does archera','what does archera charge','fee'],
+    html:`<p>The Archera platform is <strong>free</strong>. The only charge is a <strong>risk premium</strong> on Guaranteed Commitments — and only when they actually save you money. You keep <strong>100% of the achieved savings</strong> after the premium, and native (non-insured) commitments are managed at no cost.</p>`,
+    followUp:['What is a Guaranteed Commitment?'] },
+  { k:['commit','reserved',' ri ','savings plan',' sp ','gri','gsp','cud','planner','purchase','plan'],
+    html:`<p>On steady usage I'd recommend a mix of <strong>30-day Guaranteed RIs</strong> for production RDS and a <strong>Guaranteed Savings Plan</strong> for EC2/Fargate — about <strong>$3.1K/month</strong> in new savings, cancellable and transferable.</p><p>Want me to build the plan?</p>`,
+    followUp:['Build the plan','Compare 1-yr vs 30-day'] },
+];
+
+// Explainer for "what is / how do they work" questions about Guaranteed Commitments.
+const GUARANTEED_HTML = `<p><strong>Guaranteed Commitments</strong> are Archera's insured, short-term take on native cloud commitments — the same discounts as a Reserved Instance, Savings Plan or CUD, but without the 1–3 year lock-in.</p>
+<p>How they work:</p>
+<ul style="margin:4px 0 8px;padding-left:20px">
+<li><strong>Short-term</strong> — 30-day minimum terms instead of 1–3 years.</li>
+<li><strong>Insured</strong> — Archera absorbs the underutilization risk; if your usage drops, Archera covers the shortfall.</li>
+<li><strong>Flexible</strong> — transferable between accounts and cancellable.</li>
+</ul>
+<p>They're named "Guaranteed " + the native commitment: <strong>GRI</strong> (Guaranteed Reserved Instance — AWS &amp; Azure), <strong>GSP</strong> (Guaranteed Savings Plan), and <strong>GCUD</strong> (Guaranteed CUD — GCP).</p>
+<p>The platform itself is free — Archera only charges a risk premium on these, and only when they save you money.</p>`;
+
+function matchIntent(msg){
+  const m = ' ' + String(msg).toLowerCase() + ' ';
+  // Definitional / explanatory questions about guaranteed products win over the
+  // "recommend a plan" intent (both mention gri/gsp/etc.).
+  const isDefinitional = /\b(what|whats|what's|how|explain|define|tell me about|difference|mean|meaning)\b/.test(m);
+  const aboutGuaranteed = /(guaranteed|money.?back|\bgri\b|\bgsp\b|\bgcud\b)/.test(m);
+  if(isDefinitional && aboutGuaranteed) return { html: GUARANTEED_HTML, followUp:['How is the premium priced?','What can I commit to?'] };
+  for(const it of INTENTS){ if(it.k.some(w => m.includes(w))) return { html: it.html, followUp: it.followUp }; }
+  return null;
+}
+
 // ─── Conversation flow definitions ────────────────────────────────────────────
 const AUTOMATION_CONFIRM = {
   type: "automation",
@@ -2134,8 +2192,11 @@ export default function App({ embedded = false, content, features, appShell, chi
     // take priority; then built-in flows; then the round-robin demo responses.
     const canned = C.promptResponses?.[msg];
     const isAutoSetup = msg === "Set up purchase automation";
-    const resp = canned || (isAutoSetup ? FLOW_SETUP_AUTOMATION_OFFER : RESP[ri%RESP.length]);
-    if(!canned && !isAutoSetup) setRi(i=>(i+1)%RESP.length);
+    // consumer canned responses win; then the automation flow; then keyword-routed
+    // topical answers; then the round-robin demo responses.
+    const routed = (!canned && !isAutoSetup) ? matchIntent(msg) : null;
+    const resp = canned || (isAutoSetup ? FLOW_SETUP_AUTOMATION_OFFER : (routed || RESP[ri%RESP.length]));
+    if(!canned && !isAutoSetup && !routed) setRi(i=>(i+1)%RESP.length);
     const respHtml=resp.html;
     const respConfirm=resp.confirm;
     // Brief, responsive "thinking" pause. `?demo=dev` keeps the fuller trace
@@ -2156,6 +2217,23 @@ export default function App({ embedded = false, content, features, appShell, chi
     if(!msg||busy) return;
     sendPrompt(msg);
   }
+
+  // External "Ask Archera" hand-off — from the AppShell ⌘K palette / header
+  // button (via the onAskAI prop) or a window 'archera:ask-ai' event. Opens the
+  // panel if it's closed, then fires the prompt so a response streams in.
+  const askArcheraRef = useRef(null);
+  askArcheraRef.current = (prompt) => {
+    const p = (prompt || '').trim();
+    if(!p) return;
+    if(!panelOpen) openPanel();
+    sendPrompt(p);
+  };
+  function askArchera(prompt){ askArcheraRef.current?.(prompt); }
+  useEffect(()=>{
+    const h = (e) => askArcheraRef.current?.(e.detail?.prompt);
+    window.addEventListener('archera:ask-ai', h);
+    return () => window.removeEventListener('archera:ask-ai', h);
+  },[]);
 
   // Send a canned response (not random) as the next conversation turn
   function sendFlowResponse(userMsg, responseObj){
@@ -2576,9 +2654,10 @@ export default function App({ embedded = false, content, features, appShell, chi
     <AppShell
       pageName="Commitment Inventory"
       provider="AWS"
-      navIcons={[{icon:'list_alt'},{icon:'equalizer',active:true},{icon:'workspaces'}]}
+      activeKey="commitment-inventory"
       maxWidth={false}
       {...appShell}
+      onAskAI={appShell?.onAskAI || askArchera}
       contentStyle={{p:0, position:'relative', overflow:'hidden', ...(appShell?.contentStyle)}}
     >
       {styleBlock}
